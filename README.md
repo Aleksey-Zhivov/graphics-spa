@@ -26,3 +26,4 @@ The project is static and can be published directly from the `main` branch.
 ## Project documentation
 
 - [Code style and engineering conventions](./docs/code-style.md)
+- [Project architecture](./docs/architecture.md)
