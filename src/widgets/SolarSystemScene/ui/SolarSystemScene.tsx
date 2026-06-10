@@ -74,7 +74,7 @@ function GalacticBackground() {
       return (seed - 1) / 2147483646;
     };
 
-    for (let index = 0; index < 900; index += 1) {
+    for (let index = 0; index < 1500; index += 1) {
       const angle = random() * Math.PI * 2;
       const radius = 52 + random() * 40;
       const bandOffset = (random() - 0.5) * 12;
@@ -95,10 +95,10 @@ function GalacticBackground() {
     () =>
       new PointsMaterial({
         blending: AdditiveBlending,
-        color: '#9fb8d5',
+        color: '#b9c9e1',
         depthWrite: false,
-        opacity: 0.17,
-        size: 0.34,
+        opacity: 0.31,
+        size: 0.42,
         sizeAttenuation: true,
         transparent: true,
       }),

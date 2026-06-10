@@ -1,18 +1,44 @@
 .scene {
   position: fixed;
   inset: 0;
+  overflow: hidden;
   background:
     radial-gradient(circle at 18% 25%, rgb(53 41 80 / 14%), transparent 28%),
     radial-gradient(circle at 77% 68%, rgb(29 66 85 / 12%), transparent 32%),
     linear-gradient(
       148deg,
-      transparent 20%,
-      rgb(82 95 125 / 5%) 45%,
-      rgb(80 65 100 / 6%) 52%,
-      transparent 76%
+      transparent 8%,
+      rgb(79 103 136 / 12%) 28%,
+      rgb(113 133 166 / 22%) 43%,
+      rgb(128 113 154 / 25%) 52%,
+      rgb(76 112 143 / 15%) 68%,
+      transparent 90%
     ),
     radial-gradient(circle at 50% 48%, rgb(23 34 54 / 36%), transparent 34%),
     var(--color-background);
+
+  &::after {
+    position: absolute;
+    z-index: 1;
+    inset: -25%;
+    pointer-events: none;
+    content: '';
+    background: linear-gradient(
+      148deg,
+      transparent 34%,
+      rgb(116 143 179 / 10%) 42%,
+      rgb(159 149 188 / 18%) 49%,
+      rgb(106 143 172 / 11%) 57%,
+      transparent 65%
+    );
+    filter: blur(2rem);
+    mix-blend-mode: screen;
+  }
+
+  canvas {
+    position: relative;
+    z-index: 0;
+  }
 }
 
 .tooltip {
