@@ -22,3 +22,7 @@ npx serve .
 ## GitHub Pages
 
 The project is static and can be published directly from the `main` branch.
+
+## Project documentation
+
+- [Code style and engineering conventions](./docs/code-style.md)
