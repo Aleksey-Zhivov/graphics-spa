@@ -2,32 +2,46 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { usePrefetchApod } from '@/entities/apod';
-import { CELESTIAL_BODIES } from '@/entities/celestialBody';
+import {
+  getCelestialBodyById,
+  getChildBodies,
+  type CelestialBodyKind,
+} from '@/entities/celestialBody';
 import { SolarSystemScene } from '@/widgets/SolarSystemScene';
 
 import styles from './SolarSystemPage.module.scss';
 
 const TIME_SCALES = [0.5, 1, 2] as const;
 
+const KIND_LABELS: Record<CelestialBodyKind, string> = {
+  star: 'Звезда',
+  planet: 'Планета',
+  dwarfPlanet: 'Карликовая планета',
+  satellite: 'Спутник',
+  comet: 'Комета',
+  asteroid: 'Астероид',
+};
+
 export function SolarSystemPage() {
   const navigate = useNavigate();
-  const { bodyId, moonId } = useParams();
+  const { bodyId } = useParams();
   const prefetchApod = usePrefetchApod();
   const [isTimePaused, setIsTimePaused] = useState(false);
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [timeScale, setTimeScale] = useState<number>(1);
-  const selectedBody = CELESTIAL_BODIES.find((body) => body.id === bodyId);
-  const selectedSatellite = selectedBody?.satellites.find((satellite) => satellite.id === moonId);
+  const selectedBody = getCelestialBodyById(bodyId);
+  const parentBody = getCelestialBodyById(selectedBody?.parentId ?? undefined);
+  const childBodies = selectedBody ? getChildBodies(selectedBody.id) : [];
 
   useEffect(() => {
     prefetchApod(undefined, { ifOlderThan: 300 });
   }, [prefetchApod]);
 
   useEffect(() => {
-    if (selectedBody && moonId && !selectedSatellite) {
-      navigate(`/body/${selectedBody.id}`, { replace: true });
+    if (bodyId && !selectedBody) {
+      navigate('/system', { replace: true });
     }
-  }, [moonId, navigate, selectedBody, selectedSatellite]);
+  }, [bodyId, navigate, selectedBody]);
 
   const resetView = () => {
     navigate('/system');
@@ -40,7 +54,6 @@ export function SolarSystemPage() {
         isTimePaused={isTimePaused}
         resetViewSignal={resetViewSignal}
         selectedBodyId={selectedBody?.id}
-        selectedSatelliteId={selectedSatellite?.id}
         timeScale={timeScale}
       />
 
@@ -60,7 +73,7 @@ export function SolarSystemPage() {
           <span>MVP / Solar system</span>
           <h1>Солнечная система</h1>
           <p>
-            Наведите курсор на планету, чтобы подсветить её орбиту. Нажмите, чтобы перейти к
+            Наведите курсор на объект, чтобы подсветить его орбиту. Нажмите, чтобы перейти к
             объекту.
           </p>
         </section>
@@ -100,40 +113,13 @@ export function SolarSystemPage() {
         ))}
       </div>
 
-      {selectedBody && selectedSatellite && (
+      {selectedBody && (
         <aside className={styles.selection}>
-          <span className={styles.eyebrow}>Спутник планеты {selectedBody.name}</span>
-          <h1>{selectedSatellite.name}</h1>
-          <p className={styles.description}>{selectedSatellite.description}</p>
-
-          <dl className={styles.facts}>
-            <div>
-              <dt>Расстояние</dt>
-              <dd>{selectedSatellite.distanceLabel}</dd>
-            </div>
-            <div>
-              <dt>Период обращения</dt>
-              <dd>{selectedSatellite.orbitalPeriodLabel}</dd>
-            </div>
-            <div>
-              <dt>Вращение вокруг оси</dt>
-              <dd>{selectedSatellite.rotationPeriodLabel}</dd>
-            </div>
-            <div>
-              <dt>Родительская планета</dt>
-              <dd>{selectedBody.name}</dd>
-            </div>
-          </dl>
-
-          <Link className={styles.backLink} to={`/body/${selectedBody.id}`}>
-            Вернуться к планете
-          </Link>
-        </aside>
-      )}
-
-      {selectedBody && !selectedSatellite && (
-        <aside className={styles.selection}>
-          <span className={styles.eyebrow}>Планета земной группы</span>
+          <span className={styles.eyebrow}>
+            {selectedBody.kind === 'satellite' && parentBody
+              ? `Спутник планеты ${parentBody.name}`
+              : KIND_LABELS[selectedBody.kind]}
+          </span>
           <h1>{selectedBody.name}</h1>
           <p className={styles.description}>{selectedBody.description}</p>
 
@@ -150,18 +136,29 @@ export function SolarSystemPage() {
               <dt>Вращение вокруг оси</dt>
               <dd>{selectedBody.rotationPeriodLabel}</dd>
             </div>
-            <div>
-              <dt>Спутники в сцене</dt>
-              <dd>{selectedBody.satellites.length}</dd>
-            </div>
+            {(selectedBody.kind === 'planet' || childBodies.length > 0) && (
+              <div>
+                <dt>Дочерние объекты в сцене</dt>
+                <dd>{childBodies.length}</dd>
+              </div>
+            )}
+            {parentBody && (
+              <div>
+                <dt>Родительский объект</dt>
+                <dd>{parentBody.name}</dd>
+              </div>
+            )}
           </dl>
 
-          {selectedBody.satellites.length === 0 && (
+          {selectedBody.kind === 'planet' && childBodies.length === 0 && (
             <p className={styles.note}>У этой планеты нет естественных спутников.</p>
           )}
 
-          <Link className={styles.backLink} to='/system'>
-            Вернуться к системе
+          <Link
+            className={styles.backLink}
+            to={parentBody?.kind === 'planet' ? `/body/${parentBody.id}` : '/system'}
+          >
+            {parentBody?.kind === 'planet' ? 'Вернуться к планете' : 'Вернуться к системе'}
           </Link>
         </aside>
       )}

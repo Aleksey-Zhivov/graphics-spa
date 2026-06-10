@@ -504,12 +504,12 @@ Callers must not manipulate camera coordinates directly.
 The initial domain model should support:
 
 ```ts
-type CelestialBodyType = 'star' | 'planet' | 'moon' | 'dwarfPlanet';
+type CelestialBodyKind = 'star' | 'planet' | 'dwarfPlanet' | 'satellite' | 'comet' | 'asteroid';
 
 type CelestialBody = {
   id: string;
   name: string;
-  type: CelestialBodyType;
+  kind: CelestialBodyKind;
   parentId: string | null;
   radiusKm: number;
   distanceFromParentKm: number;
@@ -530,7 +530,6 @@ Planned routes:
 ```text
 /system
 /body/:bodyId
-/body/:bodyId/moon/:moonId
 /apod
 /*
 ```

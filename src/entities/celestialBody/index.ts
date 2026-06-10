@@ -1,4 +1,9 @@
-export { CELESTIAL_BODIES } from './model/catalog';
+export {
+  CELESTIAL_BODIES,
+  getBodiesByKind,
+  getCelestialBodyById,
+  getChildBodies,
+} from './model/catalog';
 export {
   createOrbitPoints,
   getOrbitPosition,
@@ -9,8 +14,7 @@ export {
 export type {
   CelestialBodyData,
   CelestialBodyId,
-  CelestialBodyType,
+  CelestialBodyKind,
+  CelestialBodyShape,
   RotationDirection,
-  SatelliteData,
-  SatelliteId,
 } from './model/types';

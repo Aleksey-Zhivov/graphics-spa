@@ -1,29 +1,16 @@
-export type CelestialBodyId = 'sun' | 'mercury' | 'venus' | 'earth' | 'mars';
+export type CelestialBodyId = string;
 
-export type CelestialBodyType = 'star' | 'planet';
+export type CelestialBodyKind =
+  | 'star'
+  | 'planet'
+  | 'dwarfPlanet'
+  | 'satellite'
+  | 'comet'
+  | 'asteroid';
 
 export type RotationDirection = 'prograde' | 'retrograde';
 
-export type SatelliteId = 'moon' | 'phobos' | 'deimos';
-
-export type SatelliteData = {
-  id: SatelliteId;
-  name: string;
-  color: string;
-  textureFile?: string;
-  radius: number;
-  orbitRadius: number;
-  orbitalPeriodDays: number;
-  orbitDirection: RotationDirection;
-  rotationPeriodDays: number;
-  rotationDirection: RotationDirection;
-  isTidallyLocked: boolean;
-  initialAngle: number;
-  distanceLabel: string;
-  orbitalPeriodLabel: string;
-  rotationPeriodLabel: string;
-  description: string;
-};
+export type CelestialBodyShape = 'sphere' | 'irregular';
 
 export type CelestialBodyData = {
   atmosphere?: {
@@ -32,10 +19,12 @@ export type CelestialBodyData = {
     scale: number;
   };
   id: CelestialBodyId;
+  parentId: CelestialBodyId | null;
   name: string;
-  type: CelestialBodyType;
+  kind: CelestialBodyKind;
+  shape: CelestialBodyShape;
   color: string;
-  textureFile: string;
+  textureFile?: string;
   radius: number;
   orbitRadius: number;
   eccentricity: number;
@@ -45,10 +34,10 @@ export type CelestialBodyData = {
   rotationPeriodDays: number;
   rotationDirection: RotationDirection;
   axialTiltDegrees: number;
+  isTidallyLocked: boolean;
   initialAngle: number;
   distanceLabel: string;
   orbitalPeriodLabel: string;
   rotationPeriodLabel: string;
   description: string;
-  satellites: SatelliteData[];
 };
