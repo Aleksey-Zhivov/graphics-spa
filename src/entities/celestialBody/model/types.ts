@@ -1,4 +1,4 @@
-export type CelestialBodyId = 'sun' | 'venus' | 'earth' | 'mars';
+export type CelestialBodyId = 'sun' | 'mercury' | 'venus' | 'earth' | 'mars';
 
 export type CelestialBodyType = 'star' | 'planet';
 

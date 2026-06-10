@@ -21,6 +21,7 @@ const SYSTEM_CAMERA_POSITION = new Vector3(20, 22, 20);
 const SYSTEM_CAMERA_TARGET = new Vector3(1, 0, 0);
 
 type SolarSystemSceneProps = {
+  resetViewSignal?: number;
   selectedBodyId?: CelestialBodyId;
 };
 
@@ -203,10 +204,12 @@ function Planet({
 }
 
 function CameraFocus({
+  resetViewSignal,
   selectedBodyId,
   bodyGroups,
   controlsRef,
 }: {
+  resetViewSignal: number;
   selectedBodyId?: CelestialBodyId;
   bodyGroups: RefObject<Map<CelestialBodyId, Group>>;
   controlsRef: RefObject<OrbitControlsImpl | null>;
@@ -219,7 +222,7 @@ function CameraFocus({
 
   useEffect(() => {
     isTransitioning.current = true;
-  }, [selectedBodyId]);
+  }, [resetViewSignal, selectedBodyId]);
 
   useFrame((_, delta) => {
     const controls = controlsRef.current;
@@ -261,7 +264,7 @@ function CameraFocus({
   return null;
 }
 
-function SolarSystem({ selectedBodyId }: SolarSystemSceneProps) {
+function SolarSystem({ resetViewSignal = 0, selectedBodyId }: SolarSystemSceneProps) {
   const navigate = useNavigate();
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const bodyGroups = useRef(new Map<CelestialBodyId, Group>());
@@ -331,6 +334,7 @@ function SolarSystem({ selectedBodyId }: SolarSystemSceneProps) {
       />
 
       <CameraFocus
+        resetViewSignal={resetViewSignal}
         selectedBodyId={selectedBodyId}
         bodyGroups={bodyGroups}
         controlsRef={controlsRef}
@@ -339,7 +343,7 @@ function SolarSystem({ selectedBodyId }: SolarSystemSceneProps) {
   );
 }
 
-export function SolarSystemScene({ selectedBodyId }: SolarSystemSceneProps) {
+export function SolarSystemScene({ resetViewSignal, selectedBodyId }: SolarSystemSceneProps) {
   return (
     <div className={styles.scene}>
       <Canvas
@@ -351,7 +355,7 @@ export function SolarSystemScene({ selectedBodyId }: SolarSystemSceneProps) {
         }}
         dpr={[1, 1.75]}
       >
-        <SolarSystem selectedBodyId={selectedBodyId} />
+        <SolarSystem resetViewSignal={resetViewSignal} selectedBodyId={selectedBodyId} />
       </Canvas>
     </div>
   );

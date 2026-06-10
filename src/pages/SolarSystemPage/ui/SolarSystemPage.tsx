@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { CELESTIAL_BODIES } from '@/entities/celestialBody';
 import { SolarSystemScene } from '@/widgets/SolarSystemScene';
@@ -6,12 +7,19 @@ import { SolarSystemScene } from '@/widgets/SolarSystemScene';
 import styles from './SolarSystemPage.module.scss';
 
 export function SolarSystemPage() {
+  const navigate = useNavigate();
   const { bodyId } = useParams();
+  const [resetViewSignal, setResetViewSignal] = useState(0);
   const selectedBody = CELESTIAL_BODIES.find((body) => body.id === bodyId);
+
+  const resetView = () => {
+    navigate('/system');
+    setResetViewSignal((signal) => signal + 1);
+  };
 
   return (
     <main className={styles.page}>
-      <SolarSystemScene selectedBodyId={selectedBody?.id} />
+      <SolarSystemScene resetViewSignal={resetViewSignal} selectedBodyId={selectedBody?.id} />
 
       <header className={styles.header}>
         <Link className={styles.brand} to='/system'>
@@ -20,8 +28,7 @@ export function SolarSystemPage() {
         </Link>
 
         <nav className={styles.navigation} aria-label='Основная навигация'>
-          <button type='button'>Поиск</button>
-          <button type='button'>Фото дня</button>
+          <Link to='/apod'>Фото дня</Link>
         </nav>
       </header>
 
@@ -39,7 +46,9 @@ export function SolarSystemPage() {
       <div className={styles.controls}>
         <span>ЛКМ: вращение</span>
         <span>Колесо: масштаб</span>
-        <Link to='/system'>Reset view</Link>
+        <button type='button' onClick={resetView}>
+          Reset view
+        </button>
       </div>
 
       {selectedBody && (
