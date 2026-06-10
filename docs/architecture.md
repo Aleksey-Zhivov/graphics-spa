@@ -35,7 +35,7 @@ MVP.
 - Three.js;
 - React Three Fiber;
 - React Three Drei;
-- CSS or SCSS Modules.
+- SCSS Modules with global SCSS design tokens and CSS custom properties.
 
 ## Architectural principles
 
@@ -208,12 +208,42 @@ src/
     types/
     ui/
     styles/
+      _reset.scss
+      _tokens.scss
+      _mixins.scss
+      global.scss
 
   main.tsx
 ```
 
 Directories must be created only when they contain real code. Small modules
 should remain small.
+
+## Styling architecture
+
+Component styles use SCSS Modules:
+
+```text
+ControlPanel/
+  ControlPanel.tsx
+  ControlPanel.module.scss
+  index.ts
+```
+
+Global styles are stored in `shared/styles` and imported only by the
+application entry point.
+
+- `_reset.scss` normalizes browser defaults;
+- `_tokens.scss` defines global design tokens;
+- `_mixins.scss` contains reusable responsive and accessibility patterns;
+- `global.scss` composes global styles and document-level rules.
+
+CSS custom properties are the source of truth for colors, spacing, typography,
+and other values that may participate in theming or change at runtime. SCSS
+variables and functions are used for compile-time calculations and mixins.
+
+Global selectors must not style the internal structure of a component.
+Component-specific styles stay in the owning `.module.scss` file.
 
 ## Module public API
 
@@ -620,4 +650,3 @@ The following choices require later product or technical validation:
 - scientific mode and JPL Horizons proxy hosting;
 - advanced atmosphere and surface shaders;
 - offline caching and installable PWA support.
-

@@ -16,7 +16,8 @@ current project.
 - ECMAScript modules.
 - ESLint for static analysis.
 - Prettier for formatting.
-- CSS Modules or SCSS Modules for component styles.
+- SCSS Modules for component styles.
+- Global SCSS for reset, design tokens, typography, and document-level styles.
 - GitHub Pages deployment from the production build.
 
 Adding a runtime dependency requires a concrete product or engineering need.
@@ -201,9 +202,15 @@ Additional rules:
 
 ## Styling
 
-- Use component-scoped CSS/SCSS Modules.
-- Keep global styles limited to reset, typography, theme tokens, and document
+- Use component-scoped SCSS Modules with the `.module.scss` extension.
+- Keep global SCSS limited to reset, typography, theme tokens, and document
   layout.
+- Import global styles only from the application entry point.
+- Use CSS custom properties for theme values and values changed at runtime.
+- Use SCSS variables, functions, and mixins only for build-time calculations
+  and reusable style patterns.
+- Do not duplicate the same token in both an SCSS variable and a CSS custom
+  property without a specific need.
 - Define reusable colors, spacing, typography, and motion values as CSS custom
   properties.
 - Use mobile-first media queries.
@@ -212,6 +219,28 @@ Additional rules:
   calculated at runtime, such as dynamic colors or canvas dimensions.
 - Respect `prefers-reduced-motion`.
 - Keep contrast, focus states, and touch target sizes accessible.
+
+```text
+src/
+  styles/
+    _reset.scss
+    _tokens.scss
+    _mixins.scss
+    global.scss
+
+  components/
+    ControlPanel/
+      ControlPanel.tsx
+      ControlPanel.module.scss
+```
+
+```scss
+:root {
+  --color-background: #05060a;
+  --color-text-primary: #f5f7ff;
+  --space-md: 1rem;
+}
+```
 
 ## Canvas and graphics
 
@@ -243,4 +272,3 @@ Before a change is considered complete:
   `Add particle density control`.
 - Do not commit generated `dist`, local environment files, or editor metadata.
 - Update documentation when architecture or behavior changes.
-
