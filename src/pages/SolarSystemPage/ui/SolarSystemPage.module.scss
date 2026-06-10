@@ -1,0 +1,170 @@
+@use '@/shared/styles/mixins' as mixins;
+
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  position: fixed;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-surface-border);
+  pointer-events: none;
+}
+
+.brand,
+.navigation {
+  pointer-events: auto;
+}
+
+.brand {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.brandMark {
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 1rem rgb(143 217 255 / 65%);
+}
+
+.navigation {
+  display: flex;
+  gap: 0.6rem;
+
+  button {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--color-surface-border);
+    color: var(--color-text-secondary);
+    background: rgb(4 8 16 / 58%);
+  }
+}
+
+.intro {
+  position: fixed;
+  z-index: 2;
+  top: 7rem;
+  left: 1.5rem;
+  width: min(25rem, calc(100vw - 3rem));
+  pointer-events: none;
+
+  span {
+    color: var(--color-accent);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0.55rem 0 0.75rem;
+    font-size: clamp(2rem, 5vw, 4.5rem);
+    letter-spacing: -0.06em;
+    line-height: 0.92;
+  }
+
+  p {
+    max-width: 21rem;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+}
+
+.controls {
+  position: fixed;
+  z-index: 3;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  a {
+    color: var(--color-accent);
+  }
+}
+
+.selection {
+  @include mixins.glass-panel;
+
+  position: fixed;
+  z-index: 4;
+  right: 1.5rem;
+  top: 6rem;
+  width: min(20rem, calc(100vw - 3rem));
+  padding: 1.25rem;
+
+  span {
+    color: var(--color-accent);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.45rem;
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+
+  a {
+    color: var(--color-text-primary);
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 1rem;
+  }
+
+  .navigation button:first-child {
+    display: none;
+  }
+
+  .intro {
+    top: 5.5rem;
+    left: 1rem;
+  }
+
+  .controls {
+    right: 1rem;
+    bottom: 1rem;
+
+    span {
+      display: none;
+    }
+  }
+
+  .selection {
+    right: 1rem;
+    bottom: 3.5rem;
+    top: auto;
+  }
+}

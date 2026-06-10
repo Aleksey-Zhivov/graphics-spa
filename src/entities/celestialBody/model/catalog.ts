@@ -1,0 +1,48 @@
+import type { CelestialBodyData } from './types';
+
+export const CELESTIAL_BODIES: CelestialBodyData[] = [
+  {
+    id: 'sun',
+    name: 'Солнце',
+    type: 'star',
+    color: '#ffb44a',
+    radius: 2.7,
+    orbitRadius: 0,
+    orbitalSpeed: 0,
+    initialAngle: 0,
+    distanceLabel: 'Центр системы',
+  },
+  {
+    id: 'venus',
+    name: 'Венера',
+    type: 'planet',
+    color: '#e8bd75',
+    radius: 0.72,
+    orbitRadius: 7.5,
+    orbitalSpeed: 0.13,
+    initialAngle: 1.7,
+    distanceLabel: '108,2 млн км от Солнца',
+  },
+  {
+    id: 'earth',
+    name: 'Земля',
+    type: 'planet',
+    color: '#4c86c6',
+    radius: 0.8,
+    orbitRadius: 11,
+    orbitalSpeed: 0.1,
+    initialAngle: 3.1,
+    distanceLabel: '149,6 млн км от Солнца',
+  },
+  {
+    id: 'mars',
+    name: 'Марс',
+    type: 'planet',
+    color: '#b95835',
+    radius: 0.62,
+    orbitRadius: 15,
+    orbitalSpeed: 0.08,
+    initialAngle: 5.2,
+    distanceLabel: '227,9 млн км от Солнца',
+  },
+];

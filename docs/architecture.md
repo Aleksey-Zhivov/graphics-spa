@@ -273,11 +273,7 @@ export type { CelestialBodyData } from './model/types';
 Consumer:
 
 ```ts
-import {
-  CelestialBody,
-  selectBodyById,
-  type CelestialBodyData,
-} from '@/entities/celestialBody';
+import { CelestialBody, selectBodyById, type CelestialBodyData } from '@/entities/celestialBody';
 ```
 
 Rules:
@@ -508,11 +504,7 @@ Callers must not manipulate camera coordinates directly.
 The initial domain model should support:
 
 ```ts
-type CelestialBodyType =
-  | 'star'
-  | 'planet'
-  | 'moon'
-  | 'dwarfPlanet';
+type CelestialBodyType = 'star' | 'planet' | 'moon' | 'dwarfPlanet';
 
 type CelestialBody = {
   id: string;

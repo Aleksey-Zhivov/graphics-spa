@@ -1,27 +1,28 @@
-# Orbital Lab
+# Solar Atlas
 
-An interactive single-page graphics playground built with Canvas and vanilla
-JavaScript.
+An interactive 3D atlas of the Solar System built with React, TypeScript,
+Three.js, and React Three Fiber.
 
-## Features
+## Current prototype
 
-- Three particle motion modes: orbit, flow, and pulse
-- Adjustable energy and particle density
-- Four switchable color palettes
-- Cursor interaction, pause, and randomize controls
-- Responsive layout with no runtime dependencies
+- an angled Solar System overview;
+- the Sun, Venus, Earth, and Mars;
+- animated visually normalized orbits;
+- orbit highlighting and planet tooltips;
+- route-driven planet selection;
+- mouse and touch camera controls.
 
 ## Run locally
 
-Open `index.html` directly, or serve the folder:
-
 ```bash
-npx serve .
+npm install
+npm run dev
 ```
 
 ## GitHub Pages
 
-The project is static and can be published directly from the `main` branch.
+The stable version is published from `main`. Active development is performed
+in `develop` and merged into `main` after review.
 
 ## Project documentation
 

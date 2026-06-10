@@ -90,11 +90,7 @@ type PaletteButtonProps = {
   onSelect: () => void;
 };
 
-export function PaletteButton({
-  color,
-  isActive,
-  onSelect,
-}: PaletteButtonProps) {
+export function PaletteButton({ color, isActive, onSelect }: PaletteButtonProps) {
   return (
     <button
       type='button'

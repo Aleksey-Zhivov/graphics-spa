@@ -1,0 +1,29 @@
+.scene {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 48%, rgb(23 34 54 / 42%), transparent 34%),
+    var(--color-background);
+}
+
+.tooltip {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 12rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-surface-border);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  background: rgb(5 9 17 / 82%);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(14px);
+
+  strong {
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}

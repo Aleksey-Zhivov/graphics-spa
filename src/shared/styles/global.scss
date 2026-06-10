@@ -1,0 +1,18 @@
+@use './reset';
+@use './tokens';
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  overflow: hidden;
+  color: var(--color-text-primary);
+  background: var(--color-background);
+}
+
+button {
+  cursor: pointer;
+}
