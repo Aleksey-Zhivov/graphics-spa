@@ -21,9 +21,12 @@ import {
   CELESTIAL_BODIES,
   createOrbitPoints,
   getOrbitPosition,
+  getSatelliteVisualOrbitalSpeed,
   getVisualOrbitalSpeed,
+  getVisualRotationSpeed,
   type CelestialBodyData,
   type CelestialBodyId,
+  type RotationDirection,
   type SatelliteData,
   type SatelliteId,
 } from '@/entities/celestialBody';
@@ -33,6 +36,10 @@ import styles from './SolarSystemScene.module.scss';
 const SYSTEM_CAMERA_POSITION = new Vector3(20, 22, 20);
 const SYSTEM_CAMERA_TARGET = new Vector3(1, 0, 0);
 const TEXTURE_PATH = `${import.meta.env.BASE_URL}textures/`;
+
+function getThreeRotationDirection(direction: RotationDirection): number {
+  return direction === 'prograde' ? -1 : 1;
+}
 
 type SolarSystemSceneProps = {
   isTimePaused?: boolean;
@@ -323,6 +330,10 @@ function Satellite({
   const orbitRef = useRef<Group>(null);
   const satelliteRef = useRef<Group>(null);
   const orbitalTime = useRef(0);
+  const orbitalSpeed = getSatelliteVisualOrbitalSpeed(satellite.orbitalPeriodDays);
+  const orbitDirection = getThreeRotationDirection(satellite.orbitDirection);
+  const rotationSpeed = getVisualRotationSpeed(satellite.rotationPeriodDays);
+  const rotationDirection = getThreeRotationDirection(satellite.rotationDirection);
   const irregularScale: [number, number, number] =
     satellite.id === 'moon' ? [1, 1, 1] : [1.35, 0.9, 1];
 
@@ -336,8 +347,11 @@ function Satellite({
     }
 
     orbitRef.current.rotation.y =
-      satellite.initialAngle + orbitalTime.current * satellite.orbitalSpeed;
-    satelliteRef.current.rotation.y += delta * 0.18 * timeScale;
+      (satellite.initialAngle + orbitalTime.current * orbitalSpeed) * orbitDirection;
+
+    if (!isTimePaused && !satellite.isTidallyLocked) {
+      satelliteRef.current.rotation.y += delta * rotationSpeed * timeScale * rotationDirection;
+    }
   });
 
   return (
@@ -441,6 +455,7 @@ function Planet({
   onSatelliteSelect,
   onSelect,
 }: PlanetProps) {
+  const planetRef = useRef<Group>(null);
   const meshRef = useRef<Mesh>(null);
   const orbitalTime = useRef(0);
   const orbitParameters = useMemo(
@@ -456,30 +471,37 @@ function Planet({
     [body.initialAngle, orbitParameters],
   );
   const orbitalSpeed = getVisualOrbitalSpeed(body.orbitalPeriodDays);
+  const orbitDirection = body.orbitDirection === 'prograde' ? 1 : -1;
+  const rotationSpeed = getVisualRotationSpeed(body.rotationPeriodDays);
+  const rotationDirection = getThreeRotationDirection(body.rotationDirection);
 
   useFrame((_, delta) => {
-    const group = meshRef.current?.parent;
-
-    if (!group || !meshRef.current) {
+    if (!planetRef.current || !meshRef.current) {
       return;
     }
 
     if (!isSystemPaused) {
       orbitalTime.current += delta * timeScale;
-      group.position.copy(
-        getOrbitPosition(body.initialAngle + orbitalTime.current * orbitalSpeed, orbitParameters),
+      planetRef.current.position.copy(
+        getOrbitPosition(
+          body.initialAngle + orbitalTime.current * orbitalSpeed * orbitDirection,
+          orbitParameters,
+        ),
       );
     }
 
     if (!isTimePaused) {
-      meshRef.current.rotation.y += delta * 0.22 * timeScale;
+      meshRef.current.rotation.y += delta * rotationSpeed * timeScale * rotationDirection;
     }
   });
 
   return (
     <group
       position={initialPosition}
-      ref={(group) => onRegister(body.id, group)}
+      ref={(group) => {
+        planetRef.current = group;
+        onRegister(body.id, group);
+      }}
       onClick={(event) => {
         event.stopPropagation();
         onSelect(body.id);
@@ -499,30 +521,32 @@ function Planet({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      <Atmosphere body={body} isDimmed={isDimmed} />
+      <group rotation-z={(body.axialTiltDegrees * Math.PI) / 180}>
+        <Atmosphere body={body} isDimmed={isDimmed} />
 
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[body.radius, 48, 48]} />
-        <Suspense
-          fallback={
-            <meshStandardMaterial
-              color={body.color}
-              emissive={body.color}
-              emissiveIntensity={isHovered || isSelected ? 0.45 : 0.08}
-              opacity={isDimmed ? 0.18 : 1}
-              roughness={0.72}
-              transparent={isDimmed}
+        <mesh ref={meshRef}>
+          <sphereGeometry args={[body.radius, 48, 48]} />
+          <Suspense
+            fallback={
+              <meshStandardMaterial
+                color={body.color}
+                emissive={body.color}
+                emissiveIntensity={isHovered || isSelected ? 0.45 : 0.08}
+                opacity={isDimmed ? 0.18 : 1}
+                roughness={0.72}
+                transparent={isDimmed}
+              />
+            }
+          >
+            <PlanetSurface
+              body={body}
+              isDimmed={isDimmed}
+              isHovered={isHovered}
+              isSelected={isSelected}
             />
-          }
-        >
-          <PlanetSurface
-            body={body}
-            isDimmed={isDimmed}
-            isHovered={isHovered}
-            isSelected={isSelected}
-          />
-        </Suspense>
-      </mesh>
+          </Suspense>
+        </mesh>
+      </group>
 
       {isHovered && !isSelected && (
         <Html position={[0, body.radius + 0.65, 0]} center distanceFactor={20}>
@@ -554,15 +578,36 @@ function Planet({
   );
 }
 
-function Sun({ body, isDimmed }: { body: CelestialBodyData; isDimmed: boolean }) {
+function Sun({
+  body,
+  isDimmed,
+  isTimePaused,
+  timeScale,
+}: {
+  body: CelestialBodyData;
+  isDimmed: boolean;
+  isTimePaused: boolean;
+  timeScale: number;
+}) {
   const texture = useCelestialTexture(body.textureFile);
+  const meshRef = useRef<Mesh>(null);
+  const rotationSpeed = getVisualRotationSpeed(body.rotationPeriodDays);
+  const rotationDirection = getThreeRotationDirection(body.rotationDirection);
+
+  useFrame((_, delta) => {
+    if (meshRef.current && !isTimePaused) {
+      meshRef.current.rotation.y += delta * rotationSpeed * timeScale * rotationDirection;
+    }
+  });
 
   return (
-    <mesh>
-      <sphereGeometry args={[body.radius, 64, 64]} />
-      <meshBasicMaterial map={texture} transparent={isDimmed} opacity={isDimmed ? 0.18 : 1} />
+    <group rotation-z={(body.axialTiltDegrees * Math.PI) / 180}>
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[body.radius, 64, 64]} />
+        <meshBasicMaterial map={texture} transparent={isDimmed} opacity={isDimmed ? 0.18 : 1} />
+      </mesh>
       <pointLight color='#ffb56b' intensity={50} distance={35} />
-    </mesh>
+    </group>
   );
 }
 
@@ -687,7 +732,12 @@ function SolarSystem({
           </mesh>
         }
       >
-        <Sun body={sun} isDimmed={Boolean(selectedBodyId)} />
+        <Sun
+          body={sun}
+          isDimmed={Boolean(selectedBodyId)}
+          isTimePaused={isTimePaused}
+          timeScale={timeScale}
+        />
       </Suspense>
 
       {planets.map((body) => {

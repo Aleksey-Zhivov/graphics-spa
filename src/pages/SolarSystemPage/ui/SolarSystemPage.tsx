@@ -116,6 +116,10 @@ export function SolarSystemPage() {
               <dd>{selectedSatellite.orbitalPeriodLabel}</dd>
             </div>
             <div>
+              <dt>Вращение вокруг оси</dt>
+              <dd>{selectedSatellite.rotationPeriodLabel}</dd>
+            </div>
+            <div>
               <dt>Родительская планета</dt>
               <dd>{selectedBody.name}</dd>
             </div>
@@ -141,6 +145,10 @@ export function SolarSystemPage() {
             <div>
               <dt>Период обращения</dt>
               <dd>{selectedBody.orbitalPeriodLabel}</dd>
+            </div>
+            <div>
+              <dt>Вращение вокруг оси</dt>
+              <dd>{selectedBody.rotationPeriodLabel}</dd>
             </div>
             <div>
               <dt>Спутники в сцене</dt>

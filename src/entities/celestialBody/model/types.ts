@@ -2,6 +2,8 @@ export type CelestialBodyId = 'sun' | 'mercury' | 'venus' | 'earth' | 'mars';
 
 export type CelestialBodyType = 'star' | 'planet';
 
+export type RotationDirection = 'prograde' | 'retrograde';
+
 export type SatelliteId = 'moon' | 'phobos' | 'deimos';
 
 export type SatelliteData = {
@@ -11,10 +13,15 @@ export type SatelliteData = {
   textureFile?: string;
   radius: number;
   orbitRadius: number;
-  orbitalSpeed: number;
+  orbitalPeriodDays: number;
+  orbitDirection: RotationDirection;
+  rotationPeriodDays: number;
+  rotationDirection: RotationDirection;
+  isTidallyLocked: boolean;
   initialAngle: number;
   distanceLabel: string;
   orbitalPeriodLabel: string;
+  rotationPeriodLabel: string;
   description: string;
 };
 
@@ -34,9 +41,14 @@ export type CelestialBodyData = {
   eccentricity: number;
   perihelionAngle: number;
   orbitalPeriodDays: number;
+  orbitDirection: RotationDirection;
+  rotationPeriodDays: number;
+  rotationDirection: RotationDirection;
+  axialTiltDegrees: number;
   initialAngle: number;
   distanceLabel: string;
   orbitalPeriodLabel: string;
+  rotationPeriodLabel: string;
   description: string;
   satellites: SatelliteData[];
 };

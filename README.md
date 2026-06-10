@@ -41,3 +41,4 @@ in `develop` and merged into `main` after review.
 
 - [Code style and engineering conventions](./docs/code-style.md)
 - [Project architecture](./docs/architecture.md)
+- [Scientific model and visualization limits](./docs/scientific-model.md)

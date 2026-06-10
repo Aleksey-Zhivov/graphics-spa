@@ -1,6 +1,9 @@
 import { Vector3 } from 'three';
 
 const VISUAL_ORBIT_TIME_SCALE = 50;
+const VISUAL_ROTATION_TIME_SCALE = 0.35;
+const SATELLITE_REFERENCE_PERIOD_DAYS = 27.321661;
+const SATELLITE_REFERENCE_SPEED = 0.9;
 const KEPLER_ITERATIONS = 5;
 
 type OrbitParameters = {
@@ -23,6 +26,17 @@ function solveEccentricAnomaly(meanAnomaly: number, eccentricity: number): numbe
 
 export function getVisualOrbitalSpeed(orbitalPeriodDays: number): number {
   return orbitalPeriodDays > 0 ? VISUAL_ORBIT_TIME_SCALE / orbitalPeriodDays : 0;
+}
+
+export function getVisualRotationSpeed(rotationPeriodDays: number): number {
+  return rotationPeriodDays > 0 ? VISUAL_ROTATION_TIME_SCALE / rotationPeriodDays : 0;
+}
+
+export function getSatelliteVisualOrbitalSpeed(orbitalPeriodDays: number): number {
+  return orbitalPeriodDays > 0
+    ? SATELLITE_REFERENCE_SPEED *
+        Math.pow(SATELLITE_REFERENCE_PERIOD_DAYS / orbitalPeriodDays, 0.25)
+    : 0;
 }
 
 export function getOrbitPosition(
