@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { usePrefetchApod } from '@/entities/apod';
 import { CELESTIAL_BODIES } from '@/entities/celestialBody';
 import { SolarSystemScene } from '@/widgets/SolarSystemScene';
 
@@ -9,8 +10,13 @@ import styles from './SolarSystemPage.module.scss';
 export function SolarSystemPage() {
   const navigate = useNavigate();
   const { bodyId } = useParams();
+  const prefetchApod = usePrefetchApod();
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const selectedBody = CELESTIAL_BODIES.find((body) => body.id === bodyId);
+
+  useEffect(() => {
+    prefetchApod(undefined, { ifOlderThan: 300 });
+  }, [prefetchApod]);
 
   const resetView = () => {
     navigate('/system');

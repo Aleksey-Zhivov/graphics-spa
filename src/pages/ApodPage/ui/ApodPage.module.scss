@@ -83,6 +83,72 @@
   }
 }
 
+.loadingScreen {
+  display: grid;
+  place-content: center;
+  min-height: calc(100vh - 8rem);
+  text-align: center;
+
+  p {
+    margin: 1.5rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+.loader {
+  display: grid;
+  justify-items: center;
+}
+
+.earth {
+  position: relative;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, #a7e4ff 0 5%, transparent 6%),
+    radial-gradient(circle at 60% 60%, #315f82 0 15%, transparent 16%),
+    radial-gradient(circle at 38% 48%, #4f8d74 0 18%, transparent 19%),
+    radial-gradient(circle at 35% 30%, #5c9dcc, #173d68 70%);
+  box-shadow:
+    inset -0.8rem -0.6rem 1.2rem rgb(0 0 0 / 45%),
+    0 0 2rem rgb(78 157 214 / 35%);
+  animation: earthPulse 2.4s ease-in-out infinite;
+}
+
+.orbit {
+  position: absolute;
+  inset: -1.25rem;
+  border: 1px solid rgb(143 217 255 / 22%);
+  border-radius: 50%;
+  animation: moonOrbit 1.8s linear infinite;
+}
+
+.moon {
+  position: absolute;
+  top: 50%;
+  right: -0.3rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #c8cbd1;
+  box-shadow:
+    inset -0.15rem -0.1rem 0.2rem rgb(0 0 0 / 35%),
+    0 0 0.6rem rgb(255 255 255 / 35%);
+  transform: translateY(-50%);
+}
+
+.loaderLabel {
+  margin-top: 2rem;
+  color: var(--color-accent);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .apod {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.55fr);
@@ -93,6 +159,7 @@
 }
 
 .media {
+  position: relative;
   min-height: 32rem;
   overflow: hidden;
   border: 1px solid var(--color-surface-border);
@@ -110,10 +177,47 @@
     width: 100%;
     height: 100%;
     border: 0;
+    opacity: 0;
+    transition: opacity 500ms ease;
   }
 
   img {
     object-fit: contain;
+  }
+}
+
+.mediaLoader {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle, rgb(27 63 91 / 28%), transparent 20rem), #02050a;
+}
+
+.mediaVisible {
+  opacity: 1 !important;
+}
+
+@keyframes moonOrbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes earthPulse {
+  50% {
+    box-shadow:
+      inset -0.8rem -0.6rem 1.2rem rgb(0 0 0 / 45%),
+      0 0 3rem rgb(78 157 214 / 52%);
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .earth,
+  .orbit {
+    animation: none;
   }
 }
 

@@ -1,11 +1,47 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useGetApodQuery } from '@/entities/apod';
 
 import styles from './ApodPage.module.scss';
 
+const ERROR_DELAY_MS = 10_000;
+
+function OrbitalLoader() {
+  return (
+    <div className={styles.loader} role='status' aria-label='Загрузка фото дня'>
+      <div className={styles.earth}>
+        <div className={styles.orbit}>
+          <span className={styles.moon} />
+        </div>
+      </div>
+      <span className={styles.loaderLabel}>NASA / APOD</span>
+    </div>
+  );
+}
+
 export function ApodPage() {
-  const { data, isError, isLoading, refetch } = useGetApodQuery();
+  const { data, refetch } = useGetApodQuery();
+  const [requestCycle, setRequestCycle] = useState(0);
+  const [showError, setShowError] = useState(false);
+  const [loadedMediaUrl, setLoadedMediaUrl] = useState<string | null>(null);
+  const isMediaLoaded = Boolean(data?.url && loadedMediaUrl === data.url);
+
+  useEffect(() => {
+    if (data) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setShowError(true), ERROR_DELAY_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [data, requestCycle]);
+
+  const retryRequest = () => {
+    setShowError(false);
+    setRequestCycle((cycle) => cycle + 1);
+    void refetch();
+  };
 
   return (
     <main className={styles.page}>
@@ -20,23 +56,22 @@ export function ApodPage() {
         </Link>
       </header>
 
-      {isLoading && (
-        <section className={styles.status} aria-live='polite'>
-          <span>NASA / APOD</span>
-          <h1>Загружаем фото дня</h1>
-          <p>Получаем сегодняшнюю публикацию из архива NASA.</p>
+      {!data && !showError && (
+        <section className={styles.loadingScreen} aria-live='polite'>
+          <OrbitalLoader />
+          <p>Ищем сегодняшнюю публикацию в архиве NASA</p>
         </section>
       )}
 
-      {isError && (
+      {!data && showError && (
         <section className={styles.status} aria-live='assertive'>
           <span>NASA / APOD</span>
-          <h1>Не удалось загрузить публикацию</h1>
+          <h1>NASA отвечает дольше обычного</h1>
           <p>
-            Проверьте соединение или настройте <code>VITE_NASA_API_KEY</code>, если лимит
-            демонстрационного ключа исчерпан.
+            Мы несколько раз попробовали получить публикацию. Можно повторить запрос или вернуться к
+            системе.
           </p>
-          <button type='button' onClick={() => void refetch()}>
+          <button type='button' onClick={retryRequest}>
             Повторить
           </button>
         </section>
@@ -45,12 +80,19 @@ export function ApodPage() {
       {data && (
         <article className={styles.apod}>
           <div className={styles.media}>
+            {!isMediaLoaded && (
+              <div className={styles.mediaLoader}>
+                <OrbitalLoader />
+              </div>
+            )}
             {data.media_type === 'video' ? (
               <iframe
+                className={isMediaLoaded ? styles.mediaVisible : ''}
                 src={data.url}
                 title={data.title}
                 allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
                 allowFullScreen
+                onLoad={() => setLoadedMediaUrl(data.url)}
               />
             ) : (
               <a
@@ -59,7 +101,12 @@ export function ApodPage() {
                 rel='noreferrer'
                 aria-label='Открыть изображение в полном размере'
               >
-                <img src={data.url} alt={data.title} />
+                <img
+                  className={isMediaLoaded ? styles.mediaVisible : ''}
+                  src={data.url}
+                  alt={data.title}
+                  onLoad={() => setLoadedMediaUrl(data.url)}
+                />
               </a>
             )}
           </div>

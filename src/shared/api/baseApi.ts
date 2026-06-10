@@ -1,9 +1,17 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
+
+const nasaBaseQuery = retry(
+  fetchBaseQuery({
+    baseUrl: 'https://api.nasa.gov/',
+    timeout: 8000,
+  }),
+  {
+    maxRetries: 3,
+  },
+);
 
 export const baseApi = createApi({
   reducerPath: 'api',
-  baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.nasa.gov/',
-  }),
+  baseQuery: nasaBaseQuery,
   endpoints: () => ({}),
 });
