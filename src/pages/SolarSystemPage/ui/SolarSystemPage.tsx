@@ -7,11 +7,16 @@ import {
   getChildBodies,
   type CelestialBodyKind,
 } from '@/entities/celestialBody';
-import { SolarSystemScene } from '@/widgets/SolarSystemScene';
+import { SolarSystemScene, type GraphicsQuality } from '@/widgets/SolarSystemScene';
 
 import styles from './SolarSystemPage.module.scss';
 
 const TIME_SCALES = [0.5, 1, 2] as const;
+const GRAPHICS_QUALITIES: Array<{ label: string; value: GraphicsQuality }> = [
+  { label: 'Low', value: 'low' },
+  { label: 'Med', value: 'medium' },
+  { label: 'High', value: 'high' },
+];
 
 const KIND_LABELS: Record<CelestialBodyKind, string> = {
   star: 'Звезда',
@@ -27,6 +32,7 @@ export function SolarSystemPage() {
   const { bodyId } = useParams();
   const prefetchApod = usePrefetchApod();
   const [isTimePaused, setIsTimePaused] = useState(false);
+  const [graphicsQuality, setGraphicsQuality] = useState<GraphicsQuality>('high');
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [timeScale, setTimeScale] = useState<number>(1);
   const selectedBody = getCelestialBodyById(bodyId);
@@ -51,6 +57,7 @@ export function SolarSystemPage() {
   return (
     <main className={styles.page}>
       <SolarSystemScene
+        graphicsQuality={graphicsQuality}
         isTimePaused={isTimePaused}
         resetViewSignal={resetViewSignal}
         selectedBodyId={selectedBody?.id}
@@ -109,6 +116,21 @@ export function SolarSystemPage() {
             aria-pressed={timeScale === scale && !isTimePaused}
           >
             {scale}×
+          </button>
+        ))}
+      </div>
+
+      <div className={styles.qualityControls} aria-label='Качество графики'>
+        <span>Quality</span>
+        {GRAPHICS_QUALITIES.map((quality) => (
+          <button
+            className={graphicsQuality === quality.value ? styles.activeControl : ''}
+            key={quality.value}
+            type='button'
+            onClick={() => setGraphicsQuality(quality.value)}
+            aria-pressed={graphicsQuality === quality.value}
+          >
+            {quality.label}
           </button>
         ))}
       </div>

@@ -147,6 +147,42 @@
   }
 }
 
+.qualityControls {
+  position: fixed;
+  z-index: 3;
+  top: 5.75rem;
+  right: 1.5rem;
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
+  padding: 0.3rem;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 999px;
+  background: rgb(4 8 16 / 68%);
+  backdrop-filter: blur(0.8rem);
+
+  span,
+  button {
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  span {
+    padding: 0 0.45rem;
+    color: var(--color-text-secondary);
+  }
+
+  button {
+    min-width: 2.5rem;
+    padding: 0.38rem 0.5rem;
+    border: 0;
+    border-radius: 999px;
+    color: var(--color-text-secondary);
+    background: transparent;
+  }
+}
+
 .activeControl {
   color: var(--color-text-primary) !important;
   background: rgb(92 158 198 / 22%) !important;
@@ -266,5 +302,14 @@
     left: 1rem;
     width: auto;
     max-height: 38vh;
+  }
+
+  .qualityControls {
+    top: 4.75rem;
+    right: 1rem;
+
+    span {
+      display: none;
+    }
   }
 }

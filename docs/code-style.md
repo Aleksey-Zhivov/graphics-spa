@@ -32,13 +32,17 @@ The project must provide:
   "dev": "vite",
   "build": "tsc -b && vite build",
   "preview": "vite preview",
+  "test": "vitest run",
+  "test:watch": "vitest",
   "lint": "eslint .",
   "format": "prettier --write .",
   "format:check": "prettier --check ."
 }
 ```
 
-Tests will be added once the first stable user scenarios are defined.
+Pure domain and configuration logic must be covered with focused Vitest unit
+tests. Visual scene behavior is verified through browser scenarios until
+stable interaction contracts justify component or end-to-end tests.
 
 ## TypeScript
 

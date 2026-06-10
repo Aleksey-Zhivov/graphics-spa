@@ -150,12 +150,28 @@
 }
 
 .apod {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.55fr);
   gap: 1.5rem;
   width: min(90rem, 100%);
   min-height: calc(100vh - 8rem);
   margin: 0 auto;
+}
+
+.refreshStatus {
+  position: absolute;
+  z-index: 2;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--color-surface-border);
+  color: var(--color-accent);
+  background: rgb(4 8 16 / 78%);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  backdrop-filter: blur(0.8rem);
 }
 
 .media {

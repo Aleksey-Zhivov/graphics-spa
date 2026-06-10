@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { AdditiveBlending, BufferGeometry, Float32BufferAttribute, PointsMaterial } from 'three';
 
-export function GalacticBackground() {
+export function GalacticBackground({ starCount }: { starCount: number }) {
   const geometry = useMemo(() => {
     const positions: number[] = [];
     let seed = 31;
@@ -10,7 +10,7 @@ export function GalacticBackground() {
       return (seed - 1) / 2147483646;
     };
 
-    for (let index = 0; index < 1500; index += 1) {
+    for (let index = 0; index < starCount; index += 1) {
       const angle = random() * Math.PI * 2;
       const radius = 52 + random() * 40;
       const bandOffset = (random() - 0.5) * 12;
@@ -26,7 +26,7 @@ export function GalacticBackground() {
     bandGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
 
     return bandGeometry;
-  }, []);
+  }, [starCount]);
   const material = useMemo(
     () =>
       new PointsMaterial({

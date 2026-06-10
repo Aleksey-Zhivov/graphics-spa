@@ -3,19 +3,34 @@
 An interactive 3D atlas of the Solar System built with React, TypeScript,
 Three.js, and React Three Fiber.
 
-## Current prototype
+**Live demo:** [aleksey-zhivov.github.io/graphics-spa](https://aleksey-zhivov.github.io/graphics-spa/)
 
-- an angled Solar System overview;
-- the Sun, Mercury, Venus, Earth, and Mars;
-- 2K surface textures with colored fallbacks;
-- subtle atmospheric glow and a layered star field;
-- animated visually normalized orbits;
-- pause and three visual time speeds;
-- orbit highlighting and planet tooltips;
-- route-driven planet selection;
-- route-driven satellite selection with focused camera views;
-- NASA Astronomy Picture of the Day;
-- mouse and touch camera controls.
+![Solar Atlas overview](./docs/solar-atlas-preview.png)
+
+## Features
+
+- interactive 3D overview with camera travel between celestial bodies;
+- unified catalogue for stars, planets, dwarf planets, satellites, comets, and
+  asteroids;
+- physically based orbital periods, eccentricities, rotation directions, and
+  axial tilts with documented visual normalization;
+- textured planets and satellites, atmospheric glow, and a layered star field;
+- route-driven selection with direct links and browser history support;
+- pause, time scaling, and low, medium, and high graphics quality modes;
+- NASA Astronomy Picture of the Day with cache fallback and explicit loading
+  and error states;
+- responsive mouse and touch controls;
+- unit tests for orbital mathematics and deployment path configuration.
+
+## Stack
+
+- React 19 and TypeScript;
+- Vite;
+- Three.js, React Three Fiber, and Drei;
+- React Router;
+- Redux Toolkit and RTK Query;
+- SCSS Modules;
+- Vitest, ESLint, and Prettier.
 
 ## Run locally
 
@@ -24,18 +39,42 @@ npm install
 npm run dev
 ```
 
-APOD uses `DEMO_KEY` by default. To use a personal NASA API key:
+Copy the environment example:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Then replace `DEMO_KEY` in `.env.local`.
+Available variables:
+
+```dotenv
+VITE_NASA_API_KEY=DEMO_KEY
+VITE_BASE_PATH=/graphics-spa/
+```
+
+Use `VITE_BASE_PATH=/` for a root-domain deployment.
+
+## Quality checks
+
+```bash
+npm test
+npm run lint
+npm run build
+npm run format:check
+```
 
 ## GitHub Pages
 
 The stable version is published from `main`. Active development is performed
 in `develop` and merged into `main` after review.
+
+## Roadmap
+
+- add the outer planets and their major satellites;
+- add dwarf planets, comets, and the asteroid belt;
+- introduce orbit inclinations and date-based positions;
+- add scene quality auto-detection and richer body information;
+- split the production bundle into route and graphics chunks.
 
 ## Project documentation
 

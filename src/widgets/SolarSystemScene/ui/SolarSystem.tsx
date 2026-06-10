@@ -15,15 +15,18 @@ import { GalacticBackground } from '../background/GalacticBackground';
 import { OrbitingBody } from '../body/OrbitingBody';
 import { OrbitLine } from '../body/OrbitLine';
 import { Star } from '../body/Star';
+import { GRAPHICS_QUALITY } from '../model/quality';
 import type { SolarSystemSceneProps } from '../model/types';
 import { CameraFocus } from './CameraFocus';
 
 export function SolarSystem({
+  graphicsQuality = 'high',
   isTimePaused = false,
   resetViewSignal = 0,
   selectedBodyId,
   timeScale = 1,
 }: SolarSystemSceneProps) {
+  const qualitySettings = GRAPHICS_QUALITY[graphicsQuality];
   const navigate = useNavigate();
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const bodyGroups = useRef(new Map<CelestialBodyId, Group>());
@@ -53,9 +56,24 @@ export function SolarSystem({
     <>
       <ambientLight intensity={0.22} />
       <pointLight position={[0, 0, 0]} intensity={180} distance={70} />
-      <Stars radius={95} depth={50} count={2600} factor={2.6} fade speed={0.2} />
-      <Stars radius={120} depth={45} count={700} factor={4.5} saturation={0.35} fade speed={0.08} />
-      <GalacticBackground />
+      <Stars
+        radius={95}
+        depth={50}
+        count={qualitySettings.primaryStars}
+        factor={2.6}
+        fade
+        speed={0.2}
+      />
+      <Stars
+        radius={120}
+        depth={45}
+        count={qualitySettings.secondaryStars}
+        factor={4.5}
+        saturation={0.35}
+        fade
+        speed={0.08}
+      />
+      <GalacticBackground starCount={qualitySettings.galacticStars} />
 
       <Suspense
         fallback={

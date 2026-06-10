@@ -21,25 +21,24 @@ function OrbitalLoader() {
 }
 
 export function ApodPage() {
-  const { data, refetch } = useGetApodQuery();
-  const [requestCycle, setRequestCycle] = useState(0);
-  const [showError, setShowError] = useState(false);
+  const { data, isError, isFetching, refetch } = useGetApodQuery();
+  const [isDelayed, setIsDelayed] = useState(false);
   const [loadedMediaUrl, setLoadedMediaUrl] = useState<string | null>(null);
   const isMediaLoaded = Boolean(data?.url && loadedMediaUrl === data.url);
+  const showDelayedLoading = isDelayed && isFetching && !data;
 
   useEffect(() => {
-    if (data) {
+    if (data || !isFetching) {
       return;
     }
 
-    const timeout = window.setTimeout(() => setShowError(true), ERROR_DELAY_MS);
+    const timeout = window.setTimeout(() => setIsDelayed(true), ERROR_DELAY_MS);
 
     return () => window.clearTimeout(timeout);
-  }, [data, requestCycle]);
+  }, [data, isFetching]);
 
   const retryRequest = () => {
-    setShowError(false);
-    setRequestCycle((cycle) => cycle + 1);
+    setIsDelayed(false);
     void refetch();
   };
 
@@ -56,20 +55,24 @@ export function ApodPage() {
         </Link>
       </header>
 
-      {!data && !showError && (
+      {!data && isFetching && (
         <section className={styles.loadingScreen} aria-live='polite'>
           <OrbitalLoader />
-          <p>Ищем сегодняшнюю публикацию в архиве NASA</p>
+          <p>
+            {showDelayedLoading
+              ? 'NASA отвечает дольше обычного, но запрос ещё выполняется'
+              : 'Ищем сегодняшнюю публикацию в архиве NASA'}
+          </p>
         </section>
       )}
 
-      {!data && showError && (
+      {!data && isError && !isFetching && (
         <section className={styles.status} aria-live='assertive'>
           <span>NASA / APOD</span>
-          <h1>NASA отвечает дольше обычного</h1>
+          <h1>Не удалось получить публикацию</h1>
           <p>
-            Мы несколько раз попробовали получить публикацию. Можно повторить запрос или вернуться к
-            системе.
+            NASA API вернул ошибку, и подходящей сохранённой публикации не нашлось. Можно повторить
+            запрос или вернуться к системе.
           </p>
           <button type='button' onClick={retryRequest}>
             Повторить
@@ -79,6 +82,11 @@ export function ApodPage() {
 
       {data && (
         <article className={styles.apod}>
+          {isFetching && (
+            <div className={styles.refreshStatus} role='status'>
+              Обновляем данные NASA
+            </div>
+          )}
           <div className={styles.media}>
             {!isMediaLoaded && (
               <div className={styles.mediaLoader}>
