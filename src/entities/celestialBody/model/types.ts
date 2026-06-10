@@ -19,7 +19,9 @@ export type CelestialBodyData = {
   color: string;
   radius: number;
   orbitRadius: number;
-  orbitalSpeed: number;
+  eccentricity: number;
+  perihelionAngle: number;
+  orbitalPeriodDays: number;
   initialAngle: number;
   distanceLabel: string;
   orbitalPeriodLabel: string;

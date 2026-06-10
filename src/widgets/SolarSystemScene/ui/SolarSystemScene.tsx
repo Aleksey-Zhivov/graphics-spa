@@ -1,12 +1,15 @@
-import { Html, OrbitControls, Stars } from '@react-three/drei';
+import { Html, Line, OrbitControls, Stars } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DoubleSide, Group, Mesh, Vector3 } from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import {
   CELESTIAL_BODIES,
+  createOrbitPoints,
+  getOrbitPosition,
+  getVisualOrbitalSpeed,
   type CelestialBodyData,
   type CelestialBodyId,
   type SatelliteData,
@@ -26,31 +29,52 @@ type PlanetProps = {
   isDimmed: boolean;
   isHovered: boolean;
   isSelected: boolean;
+  isSystemPaused: boolean;
   onHover: (bodyId: CelestialBodyId | null) => void;
   onRegister: (bodyId: CelestialBodyId, group: Group | null) => void;
   onSelect: (bodyId: CelestialBodyId) => void;
 };
 
-type OrbitLineProps = {
+type SatelliteOrbitLineProps = {
   radius: number;
-  isActive: boolean;
-  isDimmed?: boolean;
-  isSatellite?: boolean;
 };
 
-function OrbitLine({ radius, isActive, isDimmed = false, isSatellite = false }: OrbitLineProps) {
-  const thickness = isSatellite ? 0.008 : 0.018;
-
+function SatelliteOrbitLine({ radius }: SatelliteOrbitLineProps) {
   return (
     <mesh rotation-x={Math.PI / 2}>
-      <ringGeometry args={[radius - thickness, radius + thickness, isSatellite ? 96 : 160]} />
-      <meshBasicMaterial
-        color={isActive ? '#bce8ff' : '#65809d'}
-        transparent
-        opacity={isDimmed ? 0.05 : isActive ? 0.8 : isSatellite ? 0.34 : 0.22}
-        side={DoubleSide}
-      />
+      <ringGeometry args={[radius - 0.008, radius + 0.008, 96]} />
+      <meshBasicMaterial color='#65809d' transparent opacity={0.34} side={DoubleSide} />
     </mesh>
+  );
+}
+
+function PlanetOrbitLine({
+  body,
+  isActive,
+  isDimmed,
+}: {
+  body: CelestialBodyData;
+  isActive: boolean;
+  isDimmed: boolean;
+}) {
+  const points = useMemo(
+    () =>
+      createOrbitPoints({
+        semiMajorAxis: body.orbitRadius,
+        eccentricity: body.eccentricity,
+        perihelionAngle: body.perihelionAngle,
+      }),
+    [body],
+  );
+
+  return (
+    <Line
+      points={points}
+      color={isActive ? '#bce8ff' : '#65809d'}
+      lineWidth={isActive ? 1.6 : 0.7}
+      transparent
+      opacity={isDimmed ? 0.05 : isActive ? 0.8 : 0.22}
+    />
   );
 }
 
@@ -68,7 +92,7 @@ function Satellite({ satellite }: { satellite: SatelliteData }) {
 
   return (
     <>
-      <OrbitLine radius={satellite.orbitRadius} isActive={false} isSatellite />
+      <SatelliteOrbitLine radius={satellite.orbitRadius} />
       <group ref={orbitRef}>
         <mesh position={[satellite.orbitRadius, 0, 0]}>
           <sphereGeometry args={[satellite.radius, 24, 24]} />
@@ -89,27 +113,39 @@ function Planet({
   isDimmed,
   isHovered,
   isSelected,
+  isSystemPaused,
   onHover,
   onRegister,
   onSelect,
 }: PlanetProps) {
   const meshRef = useRef<Mesh>(null);
-  const initialPosition: [number, number, number] = [
-    Math.cos(body.initialAngle) * body.orbitRadius,
-    0,
-    Math.sin(body.initialAngle) * body.orbitRadius,
-  ];
+  const orbitalTime = useRef(0);
+  const orbitParameters = useMemo(
+    () => ({
+      semiMajorAxis: body.orbitRadius,
+      eccentricity: body.eccentricity,
+      perihelionAngle: body.perihelionAngle,
+    }),
+    [body],
+  );
+  const initialPosition = useMemo(
+    () => getOrbitPosition(body.initialAngle, orbitParameters).toArray(),
+    [body.initialAngle, orbitParameters],
+  );
+  const orbitalSpeed = getVisualOrbitalSpeed(body.orbitalPeriodDays);
 
-  useFrame(({ clock }, delta) => {
+  useFrame((_, delta) => {
     const group = meshRef.current?.parent;
 
     if (!group || !meshRef.current) {
       return;
     }
 
-    if (!isSelected) {
-      const angle = body.initialAngle + clock.elapsedTime * body.orbitalSpeed;
-      group.position.set(Math.cos(angle) * body.orbitRadius, 0, Math.sin(angle) * body.orbitRadius);
+    if (!isSystemPaused) {
+      orbitalTime.current += delta;
+      group.position.copy(
+        getOrbitPosition(body.initialAngle + orbitalTime.current * orbitalSpeed, orbitParameters),
+      );
     }
 
     meshRef.current.rotation.y += delta * 0.22;
@@ -264,8 +300,8 @@ function SolarSystem({ selectedBodyId }: SolarSystemSceneProps) {
 
         return (
           <group key={body.id}>
-            <OrbitLine
-              radius={body.orbitRadius}
+            <PlanetOrbitLine
+              body={body}
               isActive={hoveredBodyId === body.id}
               isDimmed={Boolean(selectedBodyId)}
             />
@@ -274,6 +310,7 @@ function SolarSystem({ selectedBodyId }: SolarSystemSceneProps) {
               isDimmed={isDimmed}
               isHovered={hoveredBodyId === body.id}
               isSelected={isSelected}
+              isSystemPaused={Boolean(selectedBodyId)}
               onHover={setHoveredBodyId}
               onRegister={registerBody}
               onSelect={(bodyId) => navigate(`/body/${bodyId}`)}
