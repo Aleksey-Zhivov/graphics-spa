@@ -13,6 +13,7 @@ Three.js, and React Three Fiber.
 - pause and three visual time speeds;
 - orbit highlighting and planet tooltips;
 - route-driven planet selection;
+- route-driven satellite selection with focused camera views;
 - NASA Astronomy Picture of the Day;
 - mouse and touch camera controls.
 

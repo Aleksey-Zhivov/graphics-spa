@@ -88,6 +88,10 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
         orbitRadius: 1.65,
         orbitalSpeed: 0.9,
         initialAngle: 0.4,
+        distanceLabel: '384 400 км от Земли',
+        orbitalPeriodLabel: '27,3 земных суток',
+        description:
+          'Единственный естественный спутник Земли, влияющий на приливы и стабилизирующий наклон её оси.',
       },
     ],
   },
@@ -120,6 +124,10 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
         orbitRadius: 1.25,
         orbitalSpeed: 1.45,
         initialAngle: 1.2,
+        distanceLabel: '9 376 км от центра Марса',
+        orbitalPeriodLabel: '7 ч 39 мин',
+        description:
+          'Крупнейший спутник Марса неправильной формы, постепенно приближающийся к планете.',
       },
       {
         id: 'deimos',
@@ -129,6 +137,10 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
         orbitRadius: 1.85,
         orbitalSpeed: 0.72,
         initialAngle: 4.1,
+        distanceLabel: '23 463 км от центра Марса',
+        orbitalPeriodLabel: '30 ч 18 мин',
+        description:
+          'Меньший и более удалённый спутник Марса с тёмной кратерированной поверхностью.',
       },
     ],
   },

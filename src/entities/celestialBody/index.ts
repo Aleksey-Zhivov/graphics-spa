@@ -5,4 +5,5 @@ export type {
   CelestialBodyId,
   CelestialBodyType,
   SatelliteData,
+  SatelliteId,
 } from './model/types';

@@ -8,6 +8,7 @@ export function AppRouter() {
     <Routes>
       <Route path='/system' element={<SolarSystemPage />} />
       <Route path='/body/:bodyId' element={<SolarSystemPage />} />
+      <Route path='/body/:bodyId/moon/:moonId' element={<SolarSystemPage />} />
       <Route path='/apod' element={<ApodPage />} />
       <Route path='/' element={<Navigate to='/system' replace />} />
       <Route path='*' element={<Navigate to='/system' replace />} />

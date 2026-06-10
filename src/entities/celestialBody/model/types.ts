@@ -2,8 +2,10 @@ export type CelestialBodyId = 'sun' | 'mercury' | 'venus' | 'earth' | 'mars';
 
 export type CelestialBodyType = 'star' | 'planet';
 
+export type SatelliteId = 'moon' | 'phobos' | 'deimos';
+
 export type SatelliteData = {
-  id: string;
+  id: SatelliteId;
   name: string;
   color: string;
   textureFile?: string;
@@ -11,6 +13,9 @@ export type SatelliteData = {
   orbitRadius: number;
   orbitalSpeed: number;
   initialAngle: number;
+  distanceLabel: string;
+  orbitalPeriodLabel: string;
+  description: string;
 };
 
 export type CelestialBodyData = {

@@ -11,16 +11,23 @@ const TIME_SCALES = [0.5, 1, 2] as const;
 
 export function SolarSystemPage() {
   const navigate = useNavigate();
-  const { bodyId } = useParams();
+  const { bodyId, moonId } = useParams();
   const prefetchApod = usePrefetchApod();
   const [isTimePaused, setIsTimePaused] = useState(false);
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [timeScale, setTimeScale] = useState<number>(1);
   const selectedBody = CELESTIAL_BODIES.find((body) => body.id === bodyId);
+  const selectedSatellite = selectedBody?.satellites.find((satellite) => satellite.id === moonId);
 
   useEffect(() => {
     prefetchApod(undefined, { ifOlderThan: 300 });
   }, [prefetchApod]);
+
+  useEffect(() => {
+    if (selectedBody && moonId && !selectedSatellite) {
+      navigate(`/body/${selectedBody.id}`, { replace: true });
+    }
+  }, [moonId, navigate, selectedBody, selectedSatellite]);
 
   const resetView = () => {
     navigate('/system');
@@ -33,6 +40,7 @@ export function SolarSystemPage() {
         isTimePaused={isTimePaused}
         resetViewSignal={resetViewSignal}
         selectedBodyId={selectedBody?.id}
+        selectedSatelliteId={selectedSatellite?.id}
         timeScale={timeScale}
       />
 
@@ -92,7 +100,34 @@ export function SolarSystemPage() {
         ))}
       </div>
 
-      {selectedBody && (
+      {selectedBody && selectedSatellite && (
+        <aside className={styles.selection}>
+          <span className={styles.eyebrow}>Спутник планеты {selectedBody.name}</span>
+          <h1>{selectedSatellite.name}</h1>
+          <p className={styles.description}>{selectedSatellite.description}</p>
+
+          <dl className={styles.facts}>
+            <div>
+              <dt>Расстояние</dt>
+              <dd>{selectedSatellite.distanceLabel}</dd>
+            </div>
+            <div>
+              <dt>Период обращения</dt>
+              <dd>{selectedSatellite.orbitalPeriodLabel}</dd>
+            </div>
+            <div>
+              <dt>Родительская планета</dt>
+              <dd>{selectedBody.name}</dd>
+            </div>
+          </dl>
+
+          <Link className={styles.backLink} to={`/body/${selectedBody.id}`}>
+            Вернуться к планете
+          </Link>
+        </aside>
+      )}
+
+      {selectedBody && !selectedSatellite && (
         <aside className={styles.selection}>
           <span className={styles.eyebrow}>Планета земной группы</span>
           <h1>{selectedBody.name}</h1>

@@ -6,6 +6,7 @@ import {
   AdditiveBlending,
   BackSide,
   BufferGeometry,
+  CanvasTexture,
   DoubleSide,
   Float32BufferAttribute,
   Group,
@@ -24,6 +25,7 @@ import {
   type CelestialBodyData,
   type CelestialBodyId,
   type SatelliteData,
+  type SatelliteId,
 } from '@/entities/celestialBody';
 
 import styles from './SolarSystemScene.module.scss';
@@ -36,31 +38,42 @@ type SolarSystemSceneProps = {
   isTimePaused?: boolean;
   resetViewSignal?: number;
   selectedBodyId?: CelestialBodyId;
+  selectedSatelliteId?: SatelliteId;
   timeScale?: number;
 };
 
 type PlanetProps = {
   body: CelestialBodyData;
+  hoveredSatelliteId: SatelliteId | null;
   isDimmed: boolean;
   isHovered: boolean;
   isSelected: boolean;
   isSystemPaused: boolean;
   isTimePaused: boolean;
+  selectedSatelliteId?: SatelliteId;
   timeScale: number;
   onHover: (bodyId: CelestialBodyId | null) => void;
-  onRegister: (bodyId: CelestialBodyId, group: Group | null) => void;
+  onRegister: (objectId: string, group: Group | null) => void;
+  onSatelliteHover: (satelliteId: SatelliteId | null) => void;
+  onSatelliteSelect: (satelliteId: SatelliteId) => void;
   onSelect: (bodyId: CelestialBodyId) => void;
 };
 
 type SatelliteOrbitLineProps = {
+  isActive: boolean;
   radius: number;
 };
 
-function SatelliteOrbitLine({ radius }: SatelliteOrbitLineProps) {
+function SatelliteOrbitLine({ isActive, radius }: SatelliteOrbitLineProps) {
   return (
     <mesh rotation-x={Math.PI / 2}>
       <ringGeometry args={[radius - 0.008, radius + 0.008, 96]} />
-      <meshBasicMaterial color='#65809d' transparent opacity={0.34} side={DoubleSide} />
+      <meshBasicMaterial
+        color={isActive ? '#bce8ff' : '#65809d'}
+        transparent
+        opacity={isActive ? 0.78 : 0.34}
+        side={DoubleSide}
+      />
     </mesh>
   );
 }
@@ -154,7 +167,75 @@ function Atmosphere({ body, isDimmed }: { body: CelestialBodyData; isDimmed: boo
   );
 }
 
-function SatelliteSurface({ satellite }: { satellite: SatelliteData }) {
+function useProceduralSatelliteTexture(satellite: SatelliteData) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const context = canvas.getContext('2d')!;
+    let seed = satellite.id === 'phobos' ? 47 : 83;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    const baseColor = satellite.id === 'phobos' ? [126, 113, 96] : [143, 130, 111];
+    const imageData = context.createImageData(canvas.width, canvas.height);
+
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
+        const pixelIndex = (y * canvas.width + x) * 4;
+        const broadVariation = Math.sin(x * 0.035) * 7 + Math.cos(y * 0.052) * 6;
+        const noise = (random() - 0.5) * 28 + broadVariation;
+
+        imageData.data[pixelIndex] = Math.max(0, Math.min(255, baseColor[0] + noise));
+        imageData.data[pixelIndex + 1] = Math.max(0, Math.min(255, baseColor[1] + noise));
+        imageData.data[pixelIndex + 2] = Math.max(0, Math.min(255, baseColor[2] + noise));
+        imageData.data[pixelIndex + 3] = 255;
+      }
+    }
+
+    context.putImageData(imageData, 0, 0);
+
+    for (let index = 0; index < 34; index += 1) {
+      const radius = 2 + random() * 14;
+      const x = random() * canvas.width;
+      const y = random() * canvas.height;
+      const gradient = context.createRadialGradient(
+        x - radius * 0.25,
+        y - radius * 0.25,
+        radius * 0.15,
+        x,
+        y,
+        radius,
+      );
+      gradient.addColorStop(0, 'rgb(50 45 40 / 65%)');
+      gradient.addColorStop(0.72, 'rgb(96 86 75 / 32%)');
+      gradient.addColorStop(1, 'rgb(185 169 148 / 24%)');
+      context.fillStyle = gradient;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    const generatedTexture = new CanvasTexture(canvas);
+    generatedTexture.colorSpace = SRGBColorSpace;
+
+    return generatedTexture;
+  }, [satellite]);
+
+  useEffect(() => () => texture.dispose(), [texture]);
+
+  return texture;
+}
+
+function SatelliteSurface({
+  isActive,
+  satellite,
+}: {
+  isActive: boolean;
+  satellite: SatelliteData;
+}) {
   const texture = useCelestialTexture(satellite.textureFile!);
 
   return (
@@ -162,7 +243,26 @@ function SatelliteSurface({ satellite }: { satellite: SatelliteData }) {
       map={texture}
       roughness={0.92}
       emissive={satellite.color}
-      emissiveIntensity={0.025}
+      emissiveIntensity={isActive ? 0.2 : 0.025}
+    />
+  );
+}
+
+function ProceduralSatelliteSurface({
+  isActive,
+  satellite,
+}: {
+  isActive: boolean;
+  satellite: SatelliteData;
+}) {
+  const texture = useProceduralSatelliteTexture(satellite);
+
+  return (
+    <meshStandardMaterial
+      map={texture}
+      roughness={0.96}
+      emissive={satellite.color}
+      emissiveIntensity={isActive ? 0.18 : 0.02}
     />
   );
 }
@@ -198,19 +298,36 @@ function PlanetOrbitLine({
 }
 
 function Satellite({
+  isHovered,
+  isSelected,
   isTimePaused,
+  objectId,
+  onHover,
+  onRegister,
+  onSelect,
   satellite,
+  showOrbit,
   timeScale,
 }: {
+  isHovered: boolean;
+  isSelected: boolean;
   isTimePaused: boolean;
+  objectId: string;
+  onHover: (satelliteId: SatelliteId | null) => void;
+  onRegister: (objectId: string, group: Group | null) => void;
+  onSelect: (satelliteId: SatelliteId) => void;
   satellite: SatelliteData;
+  showOrbit: boolean;
   timeScale: number;
 }) {
   const orbitRef = useRef<Group>(null);
+  const satelliteRef = useRef<Group>(null);
   const orbitalTime = useRef(0);
+  const irregularScale: [number, number, number] =
+    satellite.id === 'moon' ? [1, 1, 1] : [1.35, 0.9, 1];
 
   useFrame((_, delta) => {
-    if (!orbitRef.current) {
+    if (!orbitRef.current || !satelliteRef.current) {
       return;
     }
 
@@ -220,27 +337,64 @@ function Satellite({
 
     orbitRef.current.rotation.y =
       satellite.initialAngle + orbitalTime.current * satellite.orbitalSpeed;
+    satelliteRef.current.rotation.y += delta * 0.18 * timeScale;
   });
 
   return (
     <>
-      <SatelliteOrbitLine radius={satellite.orbitRadius} />
+      {showOrbit && (
+        <SatelliteOrbitLine isActive={isHovered || isSelected} radius={satellite.orbitRadius} />
+      )}
       <group ref={orbitRef}>
-        <mesh position={[satellite.orbitRadius, 0, 0]}>
-          <sphereGeometry args={[satellite.radius, 24, 24]} />
-          {satellite.textureFile ? (
-            <Suspense fallback={<meshStandardMaterial color={satellite.color} roughness={0.9} />}>
-              <SatelliteSurface satellite={satellite} />
-            </Suspense>
-          ) : (
-            <meshStandardMaterial
-              color={satellite.color}
-              roughness={0.9}
-              emissive={satellite.color}
-              emissiveIntensity={0.08}
-            />
+        <group
+          position={[satellite.orbitRadius, 0, 0]}
+          ref={(group) => {
+            satelliteRef.current = group;
+            onRegister(objectId, group);
+          }}
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect(satellite.id);
+          }}
+          onPointerEnter={(event) => {
+            event.stopPropagation();
+            document.body.style.cursor = 'pointer';
+            onHover(satellite.id);
+          }}
+          onPointerLeave={() => {
+            document.body.style.cursor = 'default';
+            onHover(null);
+          }}
+        >
+          <mesh scale={irregularScale}>
+            <sphereGeometry args={[satellite.radius, 32, 32]} />
+            {satellite.textureFile ? (
+              <Suspense fallback={<meshStandardMaterial color={satellite.color} roughness={0.9} />}>
+                <SatelliteSurface isActive={isHovered || isSelected} satellite={satellite} />
+              </Suspense>
+            ) : (
+              <ProceduralSatelliteSurface
+                isActive={isHovered || isSelected}
+                satellite={satellite}
+              />
+            )}
+          </mesh>
+
+          <mesh>
+            <sphereGeometry args={[satellite.radius * 2.8, 20, 20]} />
+            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+          </mesh>
+
+          {isHovered && !isSelected && (
+            <Html position={[0, satellite.radius + 0.28, 0]} center distanceFactor={8}>
+              <div className={styles.tooltip} aria-live='polite'>
+                <strong>{satellite.name}</strong>
+                <span>Спутник</span>
+                <span>{satellite.orbitalPeriodLabel}</span>
+              </div>
+            </Html>
           )}
-        </mesh>
+        </group>
       </group>
     </>
   );
@@ -273,14 +427,18 @@ function PlanetSurface({
 
 function Planet({
   body,
+  hoveredSatelliteId,
   isDimmed,
   isHovered,
   isSelected,
   isSystemPaused,
   isTimePaused,
+  selectedSatelliteId,
   timeScale,
   onHover,
   onRegister,
+  onSatelliteHover,
+  onSatelliteSelect,
   onSelect,
 }: PlanetProps) {
   const meshRef = useRef<Mesh>(null);
@@ -380,8 +538,15 @@ function Planet({
         body.satellites.map((satellite) => (
           <Satellite
             key={satellite.id}
-            isTimePaused={isTimePaused}
+            isHovered={hoveredSatelliteId === satellite.id}
+            isSelected={selectedSatelliteId === satellite.id}
+            isTimePaused={isTimePaused || Boolean(selectedSatelliteId)}
+            objectId={`${body.id}:${satellite.id}`}
+            onHover={onSatelliteHover}
+            onRegister={onRegister}
+            onSelect={onSatelliteSelect}
             satellite={satellite}
+            showOrbit={!selectedSatelliteId}
             timeScale={timeScale}
           />
         ))}
@@ -404,23 +569,27 @@ function Sun({ body, isDimmed }: { body: CelestialBodyData; isDimmed: boolean })
 function CameraFocus({
   resetViewSignal,
   selectedBodyId,
+  selectedSatelliteId,
   bodyGroups,
   controlsRef,
 }: {
   resetViewSignal: number;
   selectedBodyId?: CelestialBodyId;
-  bodyGroups: RefObject<Map<CelestialBodyId, Group>>;
+  selectedSatelliteId?: SatelliteId;
+  bodyGroups: RefObject<Map<string, Group>>;
   controlsRef: RefObject<OrbitControlsImpl | null>;
 }) {
   const camera = useThree((state) => state.camera);
   const targetPosition = useRef(new Vector3());
   const desiredPosition = useRef(new Vector3());
   const selectedCameraOffset = useRef(new Vector3(0, 2.4, 5.2));
+  const moonCameraOffset = useRef(new Vector3(0, 0.42, 1.05));
+  const smallSatelliteCameraOffset = useRef(new Vector3(0, 0.3, 0.9));
   const isTransitioning = useRef(true);
 
   useEffect(() => {
     isTransitioning.current = true;
-  }, [resetViewSignal, selectedBodyId]);
+  }, [resetViewSignal, selectedBodyId, selectedSatelliteId]);
 
   useFrame((_, delta) => {
     const controls = controlsRef.current;
@@ -430,14 +599,25 @@ function CameraFocus({
     }
 
     if (selectedBodyId) {
-      const selectedGroup = bodyGroups.current.get(selectedBodyId);
+      const selectedObjectId = selectedSatelliteId
+        ? `${selectedBodyId}:${selectedSatelliteId}`
+        : selectedBodyId;
+      const selectedGroup = bodyGroups.current.get(selectedObjectId);
 
       if (!selectedGroup) {
         return;
       }
 
       selectedGroup.getWorldPosition(targetPosition.current);
-      desiredPosition.current.copy(targetPosition.current).add(selectedCameraOffset.current);
+      desiredPosition.current
+        .copy(targetPosition.current)
+        .add(
+          selectedSatelliteId
+            ? selectedSatelliteId === 'moon'
+              ? moonCameraOffset.current
+              : smallSatelliteCameraOffset.current
+            : selectedCameraOffset.current,
+        );
     } else {
       targetPosition.current.copy(SYSTEM_CAMERA_TARGET);
       desiredPosition.current.copy(SYSTEM_CAMERA_POSITION);
@@ -466,22 +646,24 @@ function SolarSystem({
   isTimePaused = false,
   resetViewSignal = 0,
   selectedBodyId,
+  selectedSatelliteId,
   timeScale = 1,
 }: SolarSystemSceneProps) {
   const navigate = useNavigate();
   const controlsRef = useRef<OrbitControlsImpl>(null);
-  const bodyGroups = useRef(new Map<CelestialBodyId, Group>());
+  const bodyGroups = useRef(new Map<string, Group>());
   const [hoveredBodyId, setHoveredBodyId] = useState<CelestialBodyId | null>(null);
+  const [hoveredSatelliteId, setHoveredSatelliteId] = useState<SatelliteId | null>(null);
   const sun = CELESTIAL_BODIES[0];
   const planets = CELESTIAL_BODIES.slice(1);
 
-  const registerBody = (bodyId: CelestialBodyId, group: Group | null) => {
+  const registerBody = (objectId: string, group: Group | null) => {
     if (group) {
-      bodyGroups.current.set(bodyId, group);
+      bodyGroups.current.set(objectId, group);
       return;
     }
 
-    bodyGroups.current.delete(bodyId);
+    bodyGroups.current.delete(objectId);
   };
 
   return (
@@ -510,7 +692,9 @@ function SolarSystem({
 
       {planets.map((body) => {
         const isSelected = selectedBodyId === body.id;
-        const isDimmed = Boolean(selectedBodyId && !isSelected);
+        const isDimmed = Boolean(
+          (selectedBodyId && !isSelected) || (selectedSatelliteId && isSelected),
+        );
 
         return (
           <group key={body.id}>
@@ -521,14 +705,18 @@ function SolarSystem({
             />
             <Planet
               body={body}
+              hoveredSatelliteId={hoveredSatelliteId}
               isDimmed={isDimmed}
               isHovered={hoveredBodyId === body.id}
               isSelected={isSelected}
               isSystemPaused={Boolean(selectedBodyId) || isTimePaused}
               isTimePaused={isTimePaused}
+              selectedSatelliteId={selectedSatelliteId}
               timeScale={timeScale}
               onHover={setHoveredBodyId}
               onRegister={registerBody}
+              onSatelliteHover={setHoveredSatelliteId}
+              onSatelliteSelect={(satelliteId) => navigate(`/body/${body.id}/moon/${satelliteId}`)}
               onSelect={(bodyId) => navigate(`/body/${bodyId}`)}
             />
           </group>
@@ -539,8 +727,8 @@ function SolarSystem({
         ref={controlsRef}
         makeDefault
         enablePan={false}
-        minDistance={selectedBodyId ? 2.4 : 16}
-        maxDistance={selectedBodyId ? 11 : 48}
+        minDistance={selectedSatelliteId ? 0.45 : selectedBodyId ? 2.4 : 16}
+        maxDistance={selectedSatelliteId ? 4 : selectedBodyId ? 11 : 48}
         minPolarAngle={selectedBodyId ? Math.PI / 5 : Math.PI / 6}
         maxPolarAngle={selectedBodyId ? Math.PI / 1.65 : Math.PI / 2.2}
         target={[1, 0, 0]}
@@ -549,6 +737,7 @@ function SolarSystem({
       <CameraFocus
         resetViewSignal={resetViewSignal}
         selectedBodyId={selectedBodyId}
+        selectedSatelliteId={selectedSatelliteId}
         bodyGroups={bodyGroups}
         controlsRef={controlsRef}
       />
@@ -560,6 +749,7 @@ export function SolarSystemScene({
   isTimePaused,
   resetViewSignal,
   selectedBodyId,
+  selectedSatelliteId,
   timeScale,
 }: SolarSystemSceneProps) {
   return (
@@ -577,6 +767,7 @@ export function SolarSystemScene({
           isTimePaused={isTimePaused}
           resetViewSignal={resetViewSignal}
           selectedBodyId={selectedBodyId}
+          selectedSatelliteId={selectedSatelliteId}
           timeScale={timeScale}
         />
       </Canvas>

@@ -13,3 +13,6 @@ were renamed for use in Solar Atlas:
 - `earth.jpg`
 - `moon.jpg`
 - `mars.jpg`
+
+Phobos and Deimos use locally generated procedural rock maps because this
+texture set does not include scientific surface maps for those satellites.
