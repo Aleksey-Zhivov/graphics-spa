@@ -7,11 +7,15 @@ import { SolarSystemScene } from '@/widgets/SolarSystemScene';
 
 import styles from './SolarSystemPage.module.scss';
 
+const TIME_SCALES = [0.5, 1, 2] as const;
+
 export function SolarSystemPage() {
   const navigate = useNavigate();
   const { bodyId } = useParams();
   const prefetchApod = usePrefetchApod();
+  const [isTimePaused, setIsTimePaused] = useState(false);
   const [resetViewSignal, setResetViewSignal] = useState(0);
+  const [timeScale, setTimeScale] = useState<number>(1);
   const selectedBody = CELESTIAL_BODIES.find((body) => body.id === bodyId);
 
   useEffect(() => {
@@ -25,7 +29,12 @@ export function SolarSystemPage() {
 
   return (
     <main className={styles.page}>
-      <SolarSystemScene resetViewSignal={resetViewSignal} selectedBodyId={selectedBody?.id} />
+      <SolarSystemScene
+        isTimePaused={isTimePaused}
+        resetViewSignal={resetViewSignal}
+        selectedBodyId={selectedBody?.id}
+        timeScale={timeScale}
+      />
 
       <header className={styles.header}>
         <Link className={styles.brand} to='/system'>
@@ -55,6 +64,32 @@ export function SolarSystemPage() {
         <button type='button' onClick={resetView}>
           Reset view
         </button>
+      </div>
+
+      <div className={styles.timeControls} aria-label='Управление временем'>
+        <button
+          className={isTimePaused ? styles.activeControl : ''}
+          type='button'
+          onClick={() => setIsTimePaused((isPaused) => !isPaused)}
+          aria-pressed={isTimePaused}
+        >
+          {isTimePaused ? 'Продолжить' : 'Пауза'}
+        </button>
+        <span className={styles.controlDivider} />
+        {TIME_SCALES.map((scale) => (
+          <button
+            className={timeScale === scale ? styles.activeControl : ''}
+            key={scale}
+            type='button'
+            onClick={() => {
+              setTimeScale(scale);
+              setIsTimePaused(false);
+            }}
+            aria-pressed={timeScale === scale && !isTimePaused}
+          >
+            {scale}×
+          </button>
+        ))}
       </div>
 
       {selectedBody && (

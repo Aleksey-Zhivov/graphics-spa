@@ -14,6 +14,11 @@ export type SatelliteData = {
 };
 
 export type CelestialBodyData = {
+  atmosphere?: {
+    color: string;
+    opacity: number;
+    scale: number;
+  };
   id: CelestialBodyId;
   name: string;
   type: CelestialBodyType;

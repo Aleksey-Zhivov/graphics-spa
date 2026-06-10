@@ -2,7 +2,16 @@
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 48%, rgb(23 34 54 / 42%), transparent 34%),
+    radial-gradient(circle at 18% 25%, rgb(53 41 80 / 14%), transparent 28%),
+    radial-gradient(circle at 77% 68%, rgb(29 66 85 / 12%), transparent 32%),
+    linear-gradient(
+      148deg,
+      transparent 20%,
+      rgb(82 95 125 / 5%) 45%,
+      rgb(80 65 100 / 6%) 52%,
+      transparent 76%
+    ),
+    radial-gradient(circle at 50% 48%, rgb(23 34 54 / 36%), transparent 34%),
     var(--color-background);
 }
 

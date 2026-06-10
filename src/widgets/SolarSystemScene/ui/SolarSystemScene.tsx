@@ -2,7 +2,18 @@ import { Html, Line, OrbitControls, Stars, useTexture } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DoubleSide, Group, Mesh, SRGBColorSpace, Vector3 } from 'three';
+import {
+  AdditiveBlending,
+  BackSide,
+  BufferGeometry,
+  DoubleSide,
+  Float32BufferAttribute,
+  Group,
+  Mesh,
+  PointsMaterial,
+  SRGBColorSpace,
+  Vector3,
+} from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import {
@@ -22,8 +33,10 @@ const SYSTEM_CAMERA_TARGET = new Vector3(1, 0, 0);
 const TEXTURE_PATH = `${import.meta.env.BASE_URL}textures/`;
 
 type SolarSystemSceneProps = {
+  isTimePaused?: boolean;
   resetViewSignal?: number;
   selectedBodyId?: CelestialBodyId;
+  timeScale?: number;
 };
 
 type PlanetProps = {
@@ -32,6 +45,8 @@ type PlanetProps = {
   isHovered: boolean;
   isSelected: boolean;
   isSystemPaused: boolean;
+  isTimePaused: boolean;
+  timeScale: number;
   onHover: (bodyId: CelestialBodyId | null) => void;
   onRegister: (bodyId: CelestialBodyId, group: Group | null) => void;
   onSelect: (bodyId: CelestialBodyId) => void;
@@ -50,6 +65,57 @@ function SatelliteOrbitLine({ radius }: SatelliteOrbitLineProps) {
   );
 }
 
+function GalacticBackground() {
+  const geometry = useMemo(() => {
+    const positions: number[] = [];
+    let seed = 31;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    for (let index = 0; index < 900; index += 1) {
+      const angle = random() * Math.PI * 2;
+      const radius = 52 + random() * 40;
+      const bandOffset = (random() - 0.5) * 12;
+
+      positions.push(
+        Math.cos(angle) * radius,
+        bandOffset + Math.sin(angle * 1.7) * 4,
+        Math.sin(angle) * radius,
+      );
+    }
+
+    const bandGeometry = new BufferGeometry();
+    bandGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+
+    return bandGeometry;
+  }, []);
+  const material = useMemo(
+    () =>
+      new PointsMaterial({
+        blending: AdditiveBlending,
+        color: '#9fb8d5',
+        depthWrite: false,
+        opacity: 0.17,
+        size: 0.34,
+        sizeAttenuation: true,
+        transparent: true,
+      }),
+    [],
+  );
+
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      material.dispose();
+    },
+    [geometry, material],
+  );
+
+  return <points geometry={geometry} material={material} rotation={[0.18, 0, -0.48]} />;
+}
+
 function useCelestialTexture(textureFile: string) {
   const sourceTexture = useTexture(`${TEXTURE_PATH}${textureFile}`);
   const renderer = useThree((state) => state.gl);
@@ -66,6 +132,26 @@ function useCelestialTexture(textureFile: string) {
   useEffect(() => () => texture.dispose(), [texture]);
 
   return texture;
+}
+
+function Atmosphere({ body, isDimmed }: { body: CelestialBodyData; isDimmed: boolean }) {
+  if (!body.atmosphere) {
+    return null;
+  }
+
+  return (
+    <mesh scale={body.atmosphere.scale}>
+      <sphereGeometry args={[body.radius, 48, 48]} />
+      <meshBasicMaterial
+        blending={AdditiveBlending}
+        color={body.atmosphere.color}
+        depthWrite={false}
+        opacity={body.atmosphere.opacity * (isDimmed ? 0.25 : 1)}
+        side={BackSide}
+        transparent
+      />
+    </mesh>
+  );
 }
 
 function SatelliteSurface({ satellite }: { satellite: SatelliteData }) {
@@ -111,16 +197,29 @@ function PlanetOrbitLine({
   );
 }
 
-function Satellite({ satellite }: { satellite: SatelliteData }) {
+function Satellite({
+  isTimePaused,
+  satellite,
+  timeScale,
+}: {
+  isTimePaused: boolean;
+  satellite: SatelliteData;
+  timeScale: number;
+}) {
   const orbitRef = useRef<Group>(null);
+  const orbitalTime = useRef(0);
 
-  useFrame(({ clock }) => {
+  useFrame((_, delta) => {
     if (!orbitRef.current) {
       return;
     }
 
+    if (!isTimePaused) {
+      orbitalTime.current += delta * timeScale;
+    }
+
     orbitRef.current.rotation.y =
-      satellite.initialAngle + clock.elapsedTime * satellite.orbitalSpeed;
+      satellite.initialAngle + orbitalTime.current * satellite.orbitalSpeed;
   });
 
   return (
@@ -178,6 +277,8 @@ function Planet({
   isHovered,
   isSelected,
   isSystemPaused,
+  isTimePaused,
+  timeScale,
   onHover,
   onRegister,
   onSelect,
@@ -206,13 +307,15 @@ function Planet({
     }
 
     if (!isSystemPaused) {
-      orbitalTime.current += delta;
+      orbitalTime.current += delta * timeScale;
       group.position.copy(
         getOrbitPosition(body.initialAngle + orbitalTime.current * orbitalSpeed, orbitParameters),
       );
     }
 
-    meshRef.current.rotation.y += delta * 0.22;
+    if (!isTimePaused) {
+      meshRef.current.rotation.y += delta * 0.22 * timeScale;
+    }
   });
 
   return (
@@ -237,6 +340,8 @@ function Planet({
         <sphereGeometry args={[body.radius * 1.8, 24, 24]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
+
+      <Atmosphere body={body} isDimmed={isDimmed} />
 
       <mesh ref={meshRef}>
         <sphereGeometry args={[body.radius, 48, 48]} />
@@ -272,7 +377,14 @@ function Planet({
       )}
 
       {isSelected &&
-        body.satellites.map((satellite) => <Satellite key={satellite.id} satellite={satellite} />)}
+        body.satellites.map((satellite) => (
+          <Satellite
+            key={satellite.id}
+            isTimePaused={isTimePaused}
+            satellite={satellite}
+            timeScale={timeScale}
+          />
+        ))}
     </group>
   );
 }
@@ -350,7 +462,12 @@ function CameraFocus({
   return null;
 }
 
-function SolarSystem({ resetViewSignal = 0, selectedBodyId }: SolarSystemSceneProps) {
+function SolarSystem({
+  isTimePaused = false,
+  resetViewSignal = 0,
+  selectedBodyId,
+  timeScale = 1,
+}: SolarSystemSceneProps) {
   const navigate = useNavigate();
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const bodyGroups = useRef(new Map<CelestialBodyId, Group>());
@@ -371,7 +488,9 @@ function SolarSystem({ resetViewSignal = 0, selectedBodyId }: SolarSystemScenePr
     <>
       <ambientLight intensity={0.22} />
       <pointLight position={[0, 0, 0]} intensity={180} distance={70} />
-      <Stars radius={95} depth={50} count={3000} factor={3} fade speed={0.3} />
+      <Stars radius={95} depth={50} count={2600} factor={2.6} fade speed={0.2} />
+      <Stars radius={120} depth={45} count={700} factor={4.5} saturation={0.35} fade speed={0.08} />
+      <GalacticBackground />
 
       <Suspense
         fallback={
@@ -405,7 +524,9 @@ function SolarSystem({ resetViewSignal = 0, selectedBodyId }: SolarSystemScenePr
               isDimmed={isDimmed}
               isHovered={hoveredBodyId === body.id}
               isSelected={isSelected}
-              isSystemPaused={Boolean(selectedBodyId)}
+              isSystemPaused={Boolean(selectedBodyId) || isTimePaused}
+              isTimePaused={isTimePaused}
+              timeScale={timeScale}
               onHover={setHoveredBodyId}
               onRegister={registerBody}
               onSelect={(bodyId) => navigate(`/body/${bodyId}`)}
@@ -435,7 +556,12 @@ function SolarSystem({ resetViewSignal = 0, selectedBodyId }: SolarSystemScenePr
   );
 }
 
-export function SolarSystemScene({ resetViewSignal, selectedBodyId }: SolarSystemSceneProps) {
+export function SolarSystemScene({
+  isTimePaused,
+  resetViewSignal,
+  selectedBodyId,
+  timeScale,
+}: SolarSystemSceneProps) {
   return (
     <div className={styles.scene}>
       <Canvas
@@ -447,7 +573,12 @@ export function SolarSystemScene({ resetViewSignal, selectedBodyId }: SolarSyste
         }}
         dpr={[1, 1.75]}
       >
-        <SolarSystem resetViewSignal={resetViewSignal} selectedBodyId={selectedBodyId} />
+        <SolarSystem
+          isTimePaused={isTimePaused}
+          resetViewSignal={resetViewSignal}
+          selectedBodyId={selectedBodyId}
+          timeScale={timeScale}
+        />
       </Canvas>
     </div>
   );

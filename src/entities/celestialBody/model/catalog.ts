@@ -36,6 +36,11 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
     satellites: [],
   },
   {
+    atmosphere: {
+      color: '#e9c878',
+      opacity: 0.13,
+      scale: 1.055,
+    },
     id: 'venus',
     name: 'Венера',
     type: 'planet',
@@ -53,6 +58,11 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
     satellites: [],
   },
   {
+    atmosphere: {
+      color: '#70c8ff',
+      opacity: 0.18,
+      scale: 1.045,
+    },
     id: 'earth',
     name: 'Земля',
     type: 'planet',
@@ -82,6 +92,11 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
     ],
   },
   {
+    atmosphere: {
+      color: '#ce7656',
+      opacity: 0.075,
+      scale: 1.025,
+    },
     id: 'mars',
     name: 'Марс',
     type: 'planet',
