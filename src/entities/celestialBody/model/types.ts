@@ -2,6 +2,16 @@ export type CelestialBodyId = 'sun' | 'venus' | 'earth' | 'mars';
 
 export type CelestialBodyType = 'star' | 'planet';
 
+export type SatelliteData = {
+  id: string;
+  name: string;
+  color: string;
+  radius: number;
+  orbitRadius: number;
+  orbitalSpeed: number;
+  initialAngle: number;
+};
+
 export type CelestialBodyData = {
   id: CelestialBodyId;
   name: string;
@@ -12,4 +22,7 @@ export type CelestialBodyData = {
   orbitalSpeed: number;
   initialAngle: number;
   distanceLabel: string;
+  orbitalPeriodLabel: string;
+  description: string;
+  satellites: SatelliteData[];
 };

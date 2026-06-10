@@ -11,7 +11,7 @@ export function SolarSystemPage() {
 
   return (
     <main className={styles.page}>
-      <SolarSystemScene />
+      <SolarSystemScene selectedBodyId={selectedBody?.id} />
 
       <header className={styles.header}>
         <Link className={styles.brand} to='/system'>
@@ -25,13 +25,16 @@ export function SolarSystemPage() {
         </nav>
       </header>
 
-      <section className={styles.intro}>
-        <span>MVP / Solar system</span>
-        <h1>Солнечная система</h1>
-        <p>
-          Наведите курсор на планету, чтобы подсветить её орбиту. Нажмите, чтобы перейти к объекту.
-        </p>
-      </section>
+      {!selectedBody && (
+        <section className={styles.intro}>
+          <span>MVP / Solar system</span>
+          <h1>Солнечная система</h1>
+          <p>
+            Наведите курсор на планету, чтобы подсветить её орбиту. Нажмите, чтобы перейти к
+            объекту.
+          </p>
+        </section>
+      )}
 
       <div className={styles.controls}>
         <span>ЛКМ: вращение</span>
@@ -41,10 +44,32 @@ export function SolarSystemPage() {
 
       {selectedBody && (
         <aside className={styles.selection}>
-          <span>Выбранный объект</span>
-          <strong>{selectedBody.name}</strong>
-          <p>Перелёт камеры и подробная карточка появятся на следующем шаге.</p>
-          <Link to='/system'>Вернуться к системе</Link>
+          <span className={styles.eyebrow}>Планета земной группы</span>
+          <h1>{selectedBody.name}</h1>
+          <p className={styles.description}>{selectedBody.description}</p>
+
+          <dl className={styles.facts}>
+            <div>
+              <dt>Расстояние</dt>
+              <dd>{selectedBody.distanceLabel}</dd>
+            </div>
+            <div>
+              <dt>Период обращения</dt>
+              <dd>{selectedBody.orbitalPeriodLabel}</dd>
+            </div>
+            <div>
+              <dt>Спутники в сцене</dt>
+              <dd>{selectedBody.satellites.length}</dd>
+            </div>
+          </dl>
+
+          {selectedBody.satellites.length === 0 && (
+            <p className={styles.note}>У этой планеты нет естественных спутников.</p>
+          )}
+
+          <Link className={styles.backLink} to='/system'>
+            Вернуться к системе
+          </Link>
         </aside>
       )}
     </main>
