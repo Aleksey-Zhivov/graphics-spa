@@ -1,8 +1,8 @@
-import { Html, Line, OrbitControls, Stars } from '@react-three/drei';
+import { Html, Line, OrbitControls, Stars, useTexture } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DoubleSide, Group, Mesh, Vector3 } from 'three';
+import { DoubleSide, Group, Mesh, SRGBColorSpace, Vector3 } from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import {
@@ -19,6 +19,7 @@ import styles from './SolarSystemScene.module.scss';
 
 const SYSTEM_CAMERA_POSITION = new Vector3(20, 22, 20);
 const SYSTEM_CAMERA_TARGET = new Vector3(1, 0, 0);
+const TEXTURE_PATH = `${import.meta.env.BASE_URL}textures/`;
 
 type SolarSystemSceneProps = {
   resetViewSignal?: number;
@@ -46,6 +47,37 @@ function SatelliteOrbitLine({ radius }: SatelliteOrbitLineProps) {
       <ringGeometry args={[radius - 0.008, radius + 0.008, 96]} />
       <meshBasicMaterial color='#65809d' transparent opacity={0.34} side={DoubleSide} />
     </mesh>
+  );
+}
+
+function useCelestialTexture(textureFile: string) {
+  const sourceTexture = useTexture(`${TEXTURE_PATH}${textureFile}`);
+  const renderer = useThree((state) => state.gl);
+  const texture = useMemo(() => {
+    const configuredTexture = sourceTexture.clone();
+
+    configuredTexture.colorSpace = SRGBColorSpace;
+    configuredTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    configuredTexture.needsUpdate = true;
+
+    return configuredTexture;
+  }, [renderer, sourceTexture]);
+
+  useEffect(() => () => texture.dispose(), [texture]);
+
+  return texture;
+}
+
+function SatelliteSurface({ satellite }: { satellite: SatelliteData }) {
+  const texture = useCelestialTexture(satellite.textureFile!);
+
+  return (
+    <meshStandardMaterial
+      map={texture}
+      roughness={0.92}
+      emissive={satellite.color}
+      emissiveIntensity={0.025}
+    />
   );
 }
 
@@ -97,15 +129,46 @@ function Satellite({ satellite }: { satellite: SatelliteData }) {
       <group ref={orbitRef}>
         <mesh position={[satellite.orbitRadius, 0, 0]}>
           <sphereGeometry args={[satellite.radius, 24, 24]} />
-          <meshStandardMaterial
-            color={satellite.color}
-            roughness={0.9}
-            emissive={satellite.color}
-            emissiveIntensity={0.08}
-          />
+          {satellite.textureFile ? (
+            <Suspense fallback={<meshStandardMaterial color={satellite.color} roughness={0.9} />}>
+              <SatelliteSurface satellite={satellite} />
+            </Suspense>
+          ) : (
+            <meshStandardMaterial
+              color={satellite.color}
+              roughness={0.9}
+              emissive={satellite.color}
+              emissiveIntensity={0.08}
+            />
+          )}
         </mesh>
       </group>
     </>
+  );
+}
+
+function PlanetSurface({
+  body,
+  isDimmed,
+  isHovered,
+  isSelected,
+}: {
+  body: CelestialBodyData;
+  isDimmed: boolean;
+  isHovered: boolean;
+  isSelected: boolean;
+}) {
+  const texture = useCelestialTexture(body.textureFile);
+
+  return (
+    <meshStandardMaterial
+      map={texture}
+      emissive={body.color}
+      emissiveIntensity={isHovered || isSelected ? 0.2 : 0.015}
+      opacity={isDimmed ? 0.18 : 1}
+      roughness={0.82}
+      transparent={isDimmed}
+    />
   );
 }
 
@@ -177,14 +240,25 @@ function Planet({
 
       <mesh ref={meshRef}>
         <sphereGeometry args={[body.radius, 48, 48]} />
-        <meshStandardMaterial
-          color={body.color}
-          emissive={body.color}
-          emissiveIntensity={isHovered || isSelected ? 0.65 : 0.12}
-          opacity={isDimmed ? 0.18 : 1}
-          roughness={0.72}
-          transparent={isDimmed}
-        />
+        <Suspense
+          fallback={
+            <meshStandardMaterial
+              color={body.color}
+              emissive={body.color}
+              emissiveIntensity={isHovered || isSelected ? 0.45 : 0.08}
+              opacity={isDimmed ? 0.18 : 1}
+              roughness={0.72}
+              transparent={isDimmed}
+            />
+          }
+        >
+          <PlanetSurface
+            body={body}
+            isDimmed={isDimmed}
+            isHovered={isHovered}
+            isSelected={isSelected}
+          />
+        </Suspense>
       </mesh>
 
       {isHovered && !isSelected && (
@@ -200,6 +274,18 @@ function Planet({
       {isSelected &&
         body.satellites.map((satellite) => <Satellite key={satellite.id} satellite={satellite} />)}
     </group>
+  );
+}
+
+function Sun({ body, isDimmed }: { body: CelestialBodyData; isDimmed: boolean }) {
+  const texture = useCelestialTexture(body.textureFile);
+
+  return (
+    <mesh>
+      <sphereGeometry args={[body.radius, 64, 64]} />
+      <meshBasicMaterial map={texture} transparent={isDimmed} opacity={isDimmed ? 0.18 : 1} />
+      <pointLight color='#ffb56b' intensity={50} distance={35} />
+    </mesh>
   );
 }
 
@@ -287,15 +373,21 @@ function SolarSystem({ resetViewSignal = 0, selectedBodyId }: SolarSystemScenePr
       <pointLight position={[0, 0, 0]} intensity={180} distance={70} />
       <Stars radius={95} depth={50} count={3000} factor={3} fade speed={0.3} />
 
-      <mesh>
-        <sphereGeometry args={[sun.radius, 64, 64]} />
-        <meshBasicMaterial
-          color={sun.color}
-          transparent={Boolean(selectedBodyId)}
-          opacity={selectedBodyId ? 0.18 : 1}
-        />
-        <pointLight color='#ffb56b' intensity={50} distance={35} />
-      </mesh>
+      <Suspense
+        fallback={
+          <mesh>
+            <sphereGeometry args={[sun.radius, 64, 64]} />
+            <meshBasicMaterial
+              color={sun.color}
+              transparent={Boolean(selectedBodyId)}
+              opacity={selectedBodyId ? 0.18 : 1}
+            />
+            <pointLight color='#ffb56b' intensity={50} distance={35} />
+          </mesh>
+        }
+      >
+        <Sun body={sun} isDimmed={Boolean(selectedBodyId)} />
+      </Suspense>
 
       {planets.map((body) => {
         const isSelected = selectedBodyId === body.id;

@@ -6,6 +6,7 @@ export type SatelliteData = {
   id: string;
   name: string;
   color: string;
+  textureFile?: string;
   radius: number;
   orbitRadius: number;
   orbitalSpeed: number;
@@ -17,6 +18,7 @@ export type CelestialBodyData = {
   name: string;
   type: CelestialBodyType;
   color: string;
+  textureFile: string;
   radius: number;
   orbitRadius: number;
   eccentricity: number;

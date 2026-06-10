@@ -7,6 +7,7 @@ Three.js, and React Three Fiber.
 
 - an angled Solar System overview;
 - the Sun, Mercury, Venus, Earth, and Mars;
+- 2K surface textures with colored fallbacks;
 - animated visually normalized orbits;
 - orbit highlighting and planet tooltips;
 - route-driven planet selection;
