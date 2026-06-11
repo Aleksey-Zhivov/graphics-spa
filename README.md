@@ -73,7 +73,10 @@ npm run format:check
 ## GitHub Pages
 
 The stable version is published from `main`. Active development is performed
-in `develop` and merged into `main` after review.
+in `develop` and merged into `main` after review. The `Deploy GitHub Pages`
+workflow validates the project, builds the Vite application, and publishes the
+`dist` artifact. Add the NASA API key as a repository secret named
+`NASA_API_KEY` to use it in production.
 
 ## Roadmap
 
