@@ -91,3 +91,17 @@
     color: var(--color-text-secondary);
   }
 }
+
+@media (max-width: 640px) {
+  .tooltip {
+    gap: 0.15rem;
+    min-width: 7.5rem;
+    max-width: 9rem;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.55rem;
+
+    strong {
+      font-size: 0.65rem;
+    }
+  }
+}

@@ -297,11 +297,21 @@
 
   .selection {
     top: auto;
-    right: 1rem;
-    bottom: 6.5rem;
-    left: 1rem;
-    width: auto;
-    max-height: 38vh;
+    right: auto;
+    bottom: 5.75rem;
+    left: 0.75rem;
+    width: min(18rem, calc(100vw - 1.5rem));
+    max-height: 30dvh;
+    padding: 0.9rem;
+
+    .eyebrow {
+      font-size: 0.55rem;
+    }
+
+    h1 {
+      margin: 0.35rem 0 0.55rem;
+      font-size: 1.9rem;
+    }
   }
 
   .qualityControls {
@@ -311,5 +321,33 @@
     span {
       display: none;
     }
+  }
+
+  .description,
+  .note {
+    font-size: 0.68rem;
+    line-height: 1.45;
+  }
+
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0.65rem 0;
+
+    div {
+      padding: 0.45rem 0.35rem 0.45rem 0;
+    }
+
+    dt {
+      font-size: 0.5rem;
+    }
+
+    dd {
+      font-size: 0.66rem;
+    }
+  }
+
+  .backLink {
+    margin-top: 0.45rem;
+    font-size: 0.62rem;
   }
 }

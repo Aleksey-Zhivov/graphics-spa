@@ -39,6 +39,7 @@ export function SolarSystem({
     selectedBody?.parentId === sun?.id
       ? selectedBody
       : getCelestialBodyById(selectedBody?.parentId ?? undefined);
+  const isFocusedView = Boolean(selectedBody);
 
   const registerBody = (bodyId: CelestialBodyId, group: Group | null) => {
     if (group) {
@@ -94,6 +95,7 @@ export function SolarSystem({
           graphicsQuality={graphicsQuality}
           isDimmed={Boolean(selectedBody && selectedBody.id !== sun.id)}
           isHovered={hoveredBodyId === sun.id}
+          isInteractive={!isFocusedView}
           isTimePaused={isTimePaused}
           timeScale={timeScale}
           onHover={setHoveredBodyId}
@@ -115,9 +117,11 @@ export function SolarSystem({
             <OrbitingBody
               body={body}
               childBodies={childBodies}
+              childrenAreInteractive={Boolean(selectedBody && selectedPrimaryBody?.id === body.id)}
               graphicsQuality={graphicsQuality}
               hoveredBodyId={hoveredBodyId}
               isDimmed={Boolean(selectedBody && selectedBody.id !== body.id)}
+              isInteractive={!isFocusedView}
               isOrbitPaused={Boolean(selectedBody) || isTimePaused}
               isTimePaused={isTimePaused}
               selectedBodyId={selectedBodyId}

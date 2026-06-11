@@ -25,6 +25,7 @@ export function Star({
   graphicsQuality,
   isDimmed,
   isHovered,
+  isInteractive,
   isTimePaused,
   timeScale,
   onHover,
@@ -35,6 +36,7 @@ export function Star({
   graphicsQuality: GraphicsQuality;
   isDimmed: boolean;
   isHovered: boolean;
+  isInteractive: boolean;
   isTimePaused: boolean;
   timeScale: number;
   onHover: (bodyId: CelestialBodyId | null) => void;
@@ -47,16 +49,16 @@ export function Star({
   const rotationDirection = getThreeRotationDirection(body.rotationDirection);
 
   useEffect(() => {
-    if (isHovered) {
+    if (isHovered && isInteractive) {
       document.body.style.cursor = 'pointer';
     }
 
     return () => {
-      if (isHovered) {
+      if (isHovered && isInteractive) {
         document.body.style.cursor = 'default';
       }
     };
-  }, [isHovered]);
+  }, [isHovered, isInteractive]);
 
   useFrame((_, delta) => {
     if (meshRef.current && !isTimePaused) {
@@ -68,14 +70,26 @@ export function Star({
     <group
       ref={(group) => onRegister(body.id, group)}
       onClick={(event) => {
+        if (!isInteractive) {
+          return;
+        }
+
         event.stopPropagation();
         onSelect(body.id);
       }}
       onPointerEnter={(event) => {
+        if (!isInteractive) {
+          return;
+        }
+
         event.stopPropagation();
         onHover(body.id);
       }}
-      onPointerLeave={() => onHover(null)}
+      onPointerLeave={() => {
+        if (isInteractive) {
+          onHover(null);
+        }
+      }}
     >
       <group rotation-z={(body.axialTiltDegrees * Math.PI) / 180}>
         {qualitySettings.effects ? (
