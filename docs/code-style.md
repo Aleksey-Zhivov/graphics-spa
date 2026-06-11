@@ -32,13 +32,17 @@ The project must provide:
   "dev": "vite",
   "build": "tsc -b && vite build",
   "preview": "vite preview",
+  "test": "vitest run",
+  "test:watch": "vitest",
   "lint": "eslint .",
   "format": "prettier --write .",
   "format:check": "prettier --check ."
 }
 ```
 
-Tests will be added once the first stable user scenarios are defined.
+Pure domain and configuration logic must be covered with focused Vitest unit
+tests. Visual scene behavior is verified through browser scenarios until
+stable interaction contracts justify component or end-to-end tests.
 
 ## TypeScript
 
@@ -46,12 +50,24 @@ Tests will be added once the first stable user scenarios are defined.
 - Enable checks for unused locals, unused parameters, and switch fallthrough.
 - Do not use `any`. Use a concrete type or `unknown` with narrowing.
 - Prefer `type` for props, unions, aliases, and data models.
-- Use `interface` only when declaration merging or intentional extension is useful.
+- Use `interface` only when declaration merging or intentional extension is
+  useful.
 - Keep types near their owner. Move shared domain types to `src/types`.
 - Use `import type` for type-only imports.
-- Do not use non-null assertions except at controlled application boundaries.
+- Do not use non-null assertions except at controlled application boundaries,
+  such as the root element in `main.tsx`.
 - Model finite UI states with unions instead of arbitrary strings.
-- Prefer explicit return types for exported utilities and hooks.
+- Prefer explicit return types for exported utilities and hooks. React
+  components may rely on inferred return types.
+
+```ts
+type MotionMode = 'orbit' | 'flow' | 'pulse';
+
+type ControlPanelProps = {
+  mode: MotionMode;
+  onModeChange: (mode: MotionMode) => void;
+};
+```
 
 ## React
 
@@ -59,22 +75,76 @@ Tests will be added once the first stable user scenarios are defined.
 - Render the application inside `StrictMode`.
 - Components and hooks must have one clear responsibility.
 - Keep state as close as possible to the components that use it.
+- Lift state only when multiple branches need the same source of truth.
 - Derive values during render when possible. Do not duplicate derived state.
 - Use effects only to synchronize with external systems.
 - Include every effect dependency. Do not silence hook lint rules.
-- Prefer controlled form elements and semantic HTML.
+- Prefer controlled form elements.
+- Use semantic HTML before adding ARIA.
 - Interactive elements must be keyboard accessible.
-- Provide stable keys from data.
-- Avoid `React.FC`; type props directly on function parameters.
+- Provide stable keys from data; do not use array indexes for mutable lists.
+- Avoid `React.FC`; type props directly on the function parameters.
 - Use named exports for components, hooks, types, and utilities.
+- Reserve default export for Vite configuration or a framework requirement.
+
+```tsx
+type PaletteButtonProps = {
+  color: string;
+  isActive: boolean;
+  onSelect: () => void;
+};
+
+export function PaletteButton({ color, isActive, onSelect }: PaletteButtonProps) {
+  return (
+    <button
+      type='button'
+      aria-pressed={isActive}
+      onClick={onSelect}
+      style={{ backgroundColor: color }}
+    />
+  );
+}
+```
 
 ## Components and files
 
-- Use `PascalCase` for component names and component files.
-- Use `camelCase` for hooks, utilities, and data files.
+- Use `PascalCase` for component names and component files:
+  `ControlPanel.tsx`.
+- Use `camelCase` for hooks, utilities, and data files:
+  `useCanvasScene.ts`, `createParticle.ts`.
 - Prefix hooks with `use`.
-- Use descriptive names and keep one main exported component per file.
+- Use descriptive names; avoid abbreviations such as `btn`, `arr`, or `obj`.
+- Keep one main exported component per component file.
 - Place tests and styles beside the owning module.
+
+Recommended structure:
+
+```text
+src/
+  app/
+    App.tsx
+  components/
+    ControlPanel/
+      ControlPanel.tsx
+      ControlPanel.module.scss
+  features/
+    graphics/
+      components/
+      hooks/
+      lib/
+      model/
+      types.ts
+  pages/
+  shared/
+    components/
+    hooks/
+    lib/
+  styles/
+  main.tsx
+```
+
+Create folders only when they have real content. Small features should remain
+small.
 
 ## Imports
 
@@ -84,6 +154,27 @@ Tests will be added once the first stable user scenarios are defined.
 - Use relative imports inside the same component or feature folder.
 - Do not create barrel files solely to shorten imports.
 - Avoid circular dependencies.
+
+```ts
+import { useEffect, useRef } from 'react';
+
+import type { Particle } from '@/features/graphics/types';
+import { resizeCanvas } from '@/features/graphics/lib/resizeCanvas';
+
+import styles from './CanvasScene.module.scss';
+```
+
+## Functions and state
+
+- Prefer `const` and arrow functions for callbacks and small local functions.
+- Use function declarations for exported utilities when this improves
+  readability.
+- Use early returns to reduce nesting.
+- Keep functions focused and reasonably short.
+- Use immutable updates for React state.
+- Extract magic numbers to named constants.
+- Do not mutate props or shared state.
+- Add comments only for non-obvious decisions and constraints.
 
 ## Formatting
 
@@ -101,16 +192,55 @@ Prettier is the formatting authority:
 }
 ```
 
+Additional rules:
+
+- One statement per line.
+- Self-close empty JSX elements.
+- Omit the value for boolean JSX props when it is `true`.
+- Do not align code manually with spaces.
+- Files must end with a newline.
+
 ## Styling
 
 - Use component-scoped SCSS Modules with the `.module.scss` extension.
-- Keep global SCSS limited to reset, typography, theme tokens, and document layout.
+- Keep global SCSS limited to reset, typography, theme tokens, and document
+  layout.
 - Import global styles only from the application entry point.
 - Use CSS custom properties for theme values and values changed at runtime.
-- Use SCSS variables, functions, and mixins for build-time calculations.
-- Use mobile-first media queries and avoid `!important`.
+- Use SCSS variables, functions, and mixins only for build-time calculations
+  and reusable style patterns.
+- Do not duplicate the same token in both an SCSS variable and a CSS custom
+  property without a specific need.
+- Define reusable colors, spacing, typography, and motion values as CSS custom
+  properties.
+- Use mobile-first media queries.
+- Avoid `!important`.
+- Prefer classes over inline styles. Inline styles are acceptable for values
+  calculated at runtime, such as dynamic colors or canvas dimensions.
 - Respect `prefers-reduced-motion`.
 - Keep contrast, focus states, and touch target sizes accessible.
+
+```text
+src/
+  styles/
+    _reset.scss
+    _tokens.scss
+    _mixins.scss
+    global.scss
+
+  components/
+    ControlPanel/
+      ControlPanel.tsx
+      ControlPanel.module.scss
+```
+
+```scss
+:root {
+  --color-background: #05060a;
+  --color-text-primary: #f5f7ff;
+  --space-md: 1rem;
+}
+```
 
 ## Canvas and graphics
 
@@ -118,7 +248,7 @@ Prettier is the formatting authority:
 - Store animation frame identifiers and mutable graphics objects in refs.
 - Start and clean up animation loops inside dedicated hooks.
 - Cancel `requestAnimationFrame` and remove event listeners during cleanup.
-- Cap `devicePixelRatio` when necessary.
+- Cap `devicePixelRatio` when necessary to protect performance.
 - Keep simulation state separate from UI control state.
 - Avoid allocating large arrays and objects on every animation frame.
 - Pause or reduce work when the document is hidden.
@@ -138,6 +268,7 @@ Before a change is considered complete:
 ## Git conventions
 
 - Keep commits focused on one coherent change.
-- Use imperative commit messages.
+- Use imperative commit messages:
+  `Add particle density control`.
 - Do not commit generated `dist`, local environment files, or editor metadata.
 - Update documentation when architecture or behavior changes.
