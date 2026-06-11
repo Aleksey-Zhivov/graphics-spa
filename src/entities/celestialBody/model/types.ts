@@ -18,6 +18,12 @@ export type CelestialBodyData = {
     opacity: number;
     scale: number;
   };
+  rings?: {
+    color: string;
+    innerRadius: number;
+    outerRadius: number;
+    opacity: number;
+  };
   id: CelestialBodyId;
   parentId: CelestialBodyId | null;
   name: string;

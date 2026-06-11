@@ -140,7 +140,7 @@ export function SolarSystem({
         makeDefault
         enablePan={false}
         minDistance={selectedBody?.kind === 'satellite' ? 0.45 : selectedBody ? 2.4 : 16}
-        maxDistance={selectedBody?.kind === 'satellite' ? 4 : selectedBody ? 11 : 48}
+        maxDistance={selectedBody?.kind === 'satellite' ? 4 : selectedBody ? 14 : 120}
         minPolarAngle={selectedBody ? Math.PI / 5 : Math.PI / 6}
         maxPolarAngle={selectedBody ? Math.PI / 1.65 : Math.PI / 2.2}
         onStart={() => setCameraInteractionSignal((signal) => signal + 1)}

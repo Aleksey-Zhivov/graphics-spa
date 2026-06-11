@@ -19,6 +19,7 @@ import { AnimatedClouds } from './AnimatedClouds';
 import { Atmosphere } from './Atmosphere';
 import { BodySurface } from './BodySurface';
 import { OrbitLine } from './OrbitLine';
+import { PlanetRings } from './PlanetRings';
 
 const KIND_LABELS = {
   planet: 'Планета',
@@ -89,6 +90,7 @@ export function OrbitingBody({
   const rotationSpeed = getVisualRotationSpeed(body.rotationPeriodDays);
   const rotationDirection = getThreeRotationDirection(body.rotationDirection);
   const axialRotationSpeed = rotationSpeed * rotationDirection;
+  const hitRadius = body.kind === 'satellite' ? Math.max(body.radius * 3, 0.42) : body.radius * 1.8;
   const irregularScale: [number, number, number] =
     body.shape === 'irregular' ? [1.35, 0.9, 1] : [1, 1, 1];
 
@@ -157,11 +159,12 @@ export function OrbitingBody({
       }}
     >
       <mesh>
-        <sphereGeometry args={[body.radius * (body.kind === 'satellite' ? 5.5 : 1.8), 24, 24]} />
+        <sphereGeometry args={[hitRadius, 24, 24]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
       <group rotation-z={(body.axialTiltDegrees * Math.PI) / 180}>
+        {body.rings && <PlanetRings rings={body.rings} isDimmed={isDimmed} />}
         <Atmosphere body={body} graphicsQuality={graphicsQuality} isDimmed={isDimmed} />
 
         <mesh ref={meshRef} scale={irregularScale}>

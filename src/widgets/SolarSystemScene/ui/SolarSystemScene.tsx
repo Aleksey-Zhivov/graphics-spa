@@ -14,7 +14,7 @@ export function SolarSystemScene({ graphicsQuality = 'medium', ...props }: Solar
       <SceneErrorBoundary resetKey={`${props.selectedBodyId ?? 'system'}:${graphicsQuality}`}>
         <Canvas
           camera={{
-            position: [20, 22, 20],
+            position: [34, 38, 34],
             fov: 48,
             near: 0.1,
             far: 240,

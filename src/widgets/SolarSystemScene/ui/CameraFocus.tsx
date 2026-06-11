@@ -21,9 +21,11 @@ export function CameraFocus({
   controlsRef: RefObject<OrbitControlsImpl | null>;
 }) {
   const camera = useThree((state) => state.camera);
+  const size = useThree((state) => state.size);
   const targetPosition = useRef(new Vector3());
   const desiredPosition = useRef(new Vector3());
   const selectedCameraOffset = useRef(new Vector3(0, 2.4, 5.2));
+  const giantPlanetOffset = useRef(new Vector3(0, 4.8, 9.6));
   const largeSatelliteOffset = useRef(new Vector3(0, 0.42, 1.05));
   const smallBodyOffset = useRef(new Vector3(0, 0.3, 0.9));
   const isTransitioning = useRef(true);
@@ -58,11 +60,16 @@ export function CameraFocus({
           ? selectedBody.radius >= 0.15
             ? largeSatelliteOffset.current
             : smallBodyOffset.current
-          : selectedCameraOffset.current;
+          : selectedBody.radius > 1
+            ? giantPlanetOffset.current
+            : selectedCameraOffset.current;
       desiredPosition.current.copy(targetPosition.current).add(offset);
     } else {
       targetPosition.current.copy(SYSTEM_CAMERA_TARGET);
-      desiredPosition.current.copy(SYSTEM_CAMERA_POSITION);
+      const aspectRatio = size.width / size.height;
+      const portraitDistanceScale = Math.min(2.1, Math.max(1, 1 / aspectRatio));
+
+      desiredPosition.current.copy(SYSTEM_CAMERA_POSITION).multiplyScalar(portraitDistanceScale);
     }
 
     const damping = 1 - Math.exp(-delta * 2.2);
