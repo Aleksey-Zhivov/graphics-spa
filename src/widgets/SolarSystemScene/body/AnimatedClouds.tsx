@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
-import { Mesh, ShaderMaterial } from 'three';
+import { Color, Mesh, ShaderMaterial } from 'three';
 
 const vertexShader = `
   varying vec2 vUv;
@@ -12,6 +12,9 @@ const vertexShader = `
 `;
 
 const fragmentShader = `
+  uniform vec3 uColor;
+  uniform float uDensity;
+  uniform float uFlowSpeed;
   uniform float uOpacity;
   uniform float uTime;
   varying vec2 vUv;
@@ -46,8 +49,12 @@ const fragmentShader = `
   }
 
   void main() {
-    vec2 flow = vec2(vUv.x * 7.0 + uTime * 0.018, vUv.y * 4.0);
-    float clouds = smoothstep(0.5, 0.7, fbm(flow));
+    float shear = sin(vUv.y * 18.0 + uTime * uFlowSpeed * 3.0) * 0.035;
+    vec2 flow = vec2(
+      vUv.x * 7.0 + uTime * uFlowSpeed + shear,
+      vUv.y * 4.0 - uTime * uFlowSpeed * 0.14
+    );
+    float clouds = smoothstep(uDensity, uDensity + 0.18, fbm(flow));
     float latitudeFade = smoothstep(0.02, 0.18, vUv.y) * smoothstep(0.98, 0.82, vUv.y);
     float alpha = clouds * latitudeFade * uOpacity;
 
@@ -55,18 +62,26 @@ const fragmentShader = `
       discard;
     }
 
-    gl_FragColor = vec4(vec3(0.9, 0.96, 1.0), alpha);
+    gl_FragColor = vec4(uColor, alpha);
   }
 `;
 
-export function EarthClouds({
+export function AnimatedClouds({
+  color,
+  density,
+  flowSpeed,
   isDimmed,
   isTimePaused,
+  opacity,
   radius,
   timeScale,
 }: {
+  color: [number, number, number];
+  density: number;
+  flowSpeed: number;
   isDimmed: boolean;
   isTimePaused: boolean;
+  opacity: number;
   radius: number;
   timeScale: number;
 }) {
@@ -74,10 +89,13 @@ export function EarthClouds({
   const materialRef = useRef<ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({
-      uOpacity: { value: isDimmed ? 0.1 : 0.5 },
+      uOpacity: { value: isDimmed ? opacity * 0.22 : opacity },
+      uColor: { value: new Color(...color) },
+      uDensity: { value: density },
+      uFlowSpeed: { value: flowSpeed },
       uTime: { value: 0 },
     }),
-    [isDimmed],
+    [color, density, flowSpeed, isDimmed, opacity],
   );
 
   useFrame((_, delta) => {
@@ -86,7 +104,7 @@ export function EarthClouds({
     }
 
     if (!isTimePaused && meshRef.current) {
-      meshRef.current.rotation.y -= delta * 0.012 * timeScale;
+      meshRef.current.rotation.y -= delta * flowSpeed * 0.22 * timeScale;
     }
   });
 

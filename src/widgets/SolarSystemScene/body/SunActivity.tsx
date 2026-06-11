@@ -3,10 +3,10 @@ import { useMemo, useRef } from 'react';
 import { AdditiveBlending, BackSide, Group, MeshBasicMaterial, ShaderMaterial } from 'three';
 
 const vertexShader = `
-  varying vec3 vPosition;
+  varying vec2 vUv;
 
   void main() {
-    vPosition = position;
+    vUv = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -14,18 +14,66 @@ const vertexShader = `
 const fragmentShader = `
   uniform float uOpacity;
   uniform float uTime;
-  varying vec3 vPosition;
+  varying vec2 vUv;
+
+  float hash(vec2 point) {
+    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+
+  float noise(vec2 point) {
+    vec2 cell = floor(point);
+    vec2 local = fract(point);
+    local = local * local * (3.0 - 2.0 * local);
+
+    return mix(
+      mix(hash(cell), hash(cell + vec2(1.0, 0.0)), local.x),
+      mix(hash(cell + vec2(0.0, 1.0)), hash(cell + vec2(1.0, 1.0)), local.x),
+      local.y
+    );
+  }
+
+  float fbm(vec2 point) {
+    float value = 0.0;
+    float amplitude = 0.55;
+
+    for (int index = 0; index < 5; index++) {
+      value += noise(point) * amplitude;
+      point = point * 2.03 + vec2(3.1, 1.7);
+      amplitude *= 0.5;
+    }
+
+    return value;
+  }
 
   void main() {
-    vec3 point = normalize(vPosition);
-    float cells =
-      sin(point.x * 22.0 + uTime * 0.7) *
-      sin(point.y * 27.0 - uTime * 0.45) *
-      sin(point.z * 24.0 + uTime * 0.55);
-    float glow = smoothstep(-0.35, 0.75, cells);
-    vec3 color = mix(vec3(1.0, 0.22, 0.01), vec3(1.0, 0.82, 0.18), glow);
+    vec2 pixelUv = floor(vUv * vec2(180.0, 90.0)) / vec2(180.0, 90.0);
+    float latitudeFlow = sin(pixelUv.y * 19.0 + uTime * 0.75) * 0.025;
+    vec2 slowFlow = vec2(
+      pixelUv.x * 8.0 + uTime * 0.11 + latitudeFlow,
+      pixelUv.y * 5.0 - uTime * 0.035
+    );
+    vec2 counterFlow = vec2(
+      pixelUv.x * 15.0 - uTime * 0.07,
+      pixelUv.y * 9.0 + uTime * 0.055
+    );
+    float convection = fbm(slowFlow);
+    float granules = noise(counterFlow);
+    float sectorPulse = sin(
+      floor(pixelUv.x * 28.0) * 1.7 +
+      floor(pixelUv.y * 14.0) * 0.9 +
+      uTime * 2.2
+    );
+    float energy = clamp(convection * 0.82 + granules * 0.34 + sectorPulse * 0.1, 0.0, 1.0);
+    float sunspotNoise = fbm(vec2(pixelUv.x * 5.0 - uTime * 0.025, pixelUv.y * 3.0));
+    float sunspots = smoothstep(0.73, 0.82, sunspotNoise) * 0.72;
+    vec3 deepOrange = vec3(0.78, 0.08, 0.0);
+    vec3 orange = vec3(1.0, 0.28, 0.015);
+    vec3 yellow = vec3(1.0, 0.9, 0.25);
+    vec3 color = mix(deepOrange, orange, smoothstep(0.18, 0.58, energy));
+    color = mix(color, yellow, smoothstep(0.55, 0.9, energy));
+    color *= 1.0 - sunspots;
 
-    gl_FragColor = vec4(color, (0.08 + glow * 0.2) * uOpacity);
+    gl_FragColor = vec4(color, uOpacity);
   }
 `;
 
@@ -92,8 +140,6 @@ export function SunActivity({
         <sphereGeometry args={[radius, 64, 64]} />
         <shaderMaterial
           ref={surfaceMaterialRef}
-          blending={AdditiveBlending}
-          depthWrite={false}
           fragmentShader={fragmentShader}
           transparent
           uniforms={surfaceUniforms}

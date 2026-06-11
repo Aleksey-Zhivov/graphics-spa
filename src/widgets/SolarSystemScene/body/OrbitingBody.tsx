@@ -15,9 +15,9 @@ import {
 import styles from '../ui/SolarSystemScene.module.scss';
 import { getThreeRotationDirection } from '../lib/motion';
 import { GRAPHICS_QUALITY, type GraphicsQuality } from '../model/quality';
+import { AnimatedClouds } from './AnimatedClouds';
 import { Atmosphere } from './Atmosphere';
 import { BodySurface } from './BodySurface';
-import { EarthClouds } from './EarthClouds';
 import { OrbitLine } from './OrbitLine';
 
 const KIND_LABELS = {
@@ -171,9 +171,26 @@ export function OrbitingBody({
         </mesh>
 
         {GRAPHICS_QUALITY[graphicsQuality].effects && body.id === 'earth' && (
-          <EarthClouds
+          <AnimatedClouds
+            color={[0.9, 0.96, 1]}
+            density={0.48}
+            flowSpeed={0.16}
             isDimmed={isDimmed}
             isTimePaused={isTimePaused}
+            opacity={0.58}
+            radius={body.radius}
+            timeScale={timeScale}
+          />
+        )}
+
+        {GRAPHICS_QUALITY[graphicsQuality].effects && body.id === 'venus' && (
+          <AnimatedClouds
+            color={[1, 0.78, 0.34]}
+            density={0.42}
+            flowSpeed={-0.1}
+            isDimmed={isDimmed}
+            isTimePaused={isTimePaused}
+            opacity={0.32}
             radius={body.radius}
             timeScale={timeScale}
           />

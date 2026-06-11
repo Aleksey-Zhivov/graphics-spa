@@ -78,25 +78,26 @@ export function Star({
       onPointerLeave={() => onHover(null)}
     >
       <group rotation-z={(body.axialTiltDegrees * Math.PI) / 180}>
-        <mesh ref={meshRef}>
-          <sphereGeometry args={[body.radius, 64, 64]} />
-          {!qualitySettings.textures ? (
-            <meshBasicMaterial
-              color={body.color}
-              transparent={isDimmed}
-              opacity={isDimmed ? 0.18 : 1}
-            />
-          ) : (
-            <TexturedStarSurface body={body} isDimmed={isDimmed} />
-          )}
-        </mesh>
-        {qualitySettings.effects && (
+        {qualitySettings.effects ? (
           <SunActivity
             isDimmed={isDimmed}
             isTimePaused={isTimePaused}
             radius={body.radius}
             timeScale={timeScale}
           />
+        ) : (
+          <mesh ref={meshRef}>
+            <sphereGeometry args={[body.radius, 64, 64]} />
+            {!qualitySettings.textures ? (
+              <meshBasicMaterial
+                color={body.color}
+                transparent={isDimmed}
+                opacity={isDimmed ? 0.18 : 1}
+              />
+            ) : (
+              <TexturedStarSurface body={body} isDimmed={isDimmed} />
+            )}
+          </mesh>
         )}
         <pointLight color='#ffb56b' intensity={50} distance={35} />
       </group>

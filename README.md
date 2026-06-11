@@ -36,8 +36,8 @@ Graphics presets have visible rendering differences:
 
 - `Low`: schematic color materials without surface textures or atmosphere;
 - `Medium`: textured bodies and the standard atmospheric scene;
-- `High`: denser space background, animated Earth clouds, solar granulation,
-  corona, and prominences.
+- `High`: denser space background, independently moving Earth and Venus
+  clouds, a pixelated solar convection flow, corona, and prominences.
 
 ## Run locally
 
