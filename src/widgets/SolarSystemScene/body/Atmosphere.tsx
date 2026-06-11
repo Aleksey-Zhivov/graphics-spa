@@ -1,9 +1,18 @@
 import { AdditiveBlending, BackSide } from 'three';
 
 import type { CelestialBodyData } from '@/entities/celestialBody';
+import { GRAPHICS_QUALITY, type GraphicsQuality } from '../model/quality';
 
-export function Atmosphere({ body, isDimmed }: { body: CelestialBodyData; isDimmed: boolean }) {
-  if (!body.atmosphere) {
+export function Atmosphere({
+  body,
+  graphicsQuality,
+  isDimmed,
+}: {
+  body: CelestialBodyData;
+  graphicsQuality: GraphicsQuality;
+  isDimmed: boolean;
+}) {
+  if (!body.atmosphere || !GRAPHICS_QUALITY[graphicsQuality].textures) {
     return null;
   }
 

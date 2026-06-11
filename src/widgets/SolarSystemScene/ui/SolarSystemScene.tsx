@@ -6,7 +6,7 @@ import { SceneErrorBoundary } from './SceneErrorBoundary';
 import styles from './SolarSystemScene.module.scss';
 import { SolarSystem } from './SolarSystem';
 
-export function SolarSystemScene({ graphicsQuality = 'high', ...props }: SolarSystemSceneProps) {
+export function SolarSystemScene({ graphicsQuality = 'medium', ...props }: SolarSystemSceneProps) {
   const qualitySettings = GRAPHICS_QUALITY[graphicsQuality];
 
   return (

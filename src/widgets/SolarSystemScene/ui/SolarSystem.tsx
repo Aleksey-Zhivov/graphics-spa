@@ -20,7 +20,7 @@ import type { SolarSystemSceneProps } from '../model/types';
 import { CameraFocus } from './CameraFocus';
 
 export function SolarSystem({
-  graphicsQuality = 'high',
+  graphicsQuality = 'medium',
   isTimePaused = false,
   resetViewSignal = 0,
   selectedBodyId,
@@ -90,6 +90,7 @@ export function SolarSystem({
       >
         <Star
           body={sun}
+          graphicsQuality={graphicsQuality}
           isDimmed={Boolean(selectedBody && selectedBody.id !== sun.id)}
           isHovered={hoveredBodyId === sun.id}
           isTimePaused={isTimePaused}
@@ -113,6 +114,7 @@ export function SolarSystem({
             <OrbitingBody
               body={body}
               childBodies={childBodies}
+              graphicsQuality={graphicsQuality}
               hoveredBodyId={hoveredBodyId}
               isDimmed={Boolean(selectedBody && selectedBody.id !== body.id)}
               isOrbitPaused={Boolean(selectedBody) || isTimePaused}

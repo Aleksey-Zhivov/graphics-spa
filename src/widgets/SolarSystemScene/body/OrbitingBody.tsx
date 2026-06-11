@@ -14,8 +14,10 @@ import {
 
 import styles from '../ui/SolarSystemScene.module.scss';
 import { getThreeRotationDirection } from '../lib/motion';
+import { GRAPHICS_QUALITY, type GraphicsQuality } from '../model/quality';
 import { Atmosphere } from './Atmosphere';
 import { BodySurface } from './BodySurface';
+import { EarthClouds } from './EarthClouds';
 import { OrbitLine } from './OrbitLine';
 
 const KIND_LABELS = {
@@ -30,6 +32,7 @@ const KIND_LABELS = {
 type OrbitingBodyProps = {
   body: CelestialBodyData;
   childBodies: CelestialBodyData[];
+  graphicsQuality: GraphicsQuality;
   hoveredBodyId: CelestialBodyId | null;
   isDimmed: boolean;
   isOrbitPaused: boolean;
@@ -45,6 +48,7 @@ type OrbitingBodyProps = {
 export function OrbitingBody({
   body,
   childBodies,
+  graphicsQuality,
   hoveredBodyId,
   isDimmed,
   isOrbitPaused,
@@ -141,7 +145,7 @@ export function OrbitingBody({
       </mesh>
 
       <group rotation-z={(body.axialTiltDegrees * Math.PI) / 180}>
-        <Atmosphere body={body} isDimmed={isDimmed} />
+        <Atmosphere body={body} graphicsQuality={graphicsQuality} isDimmed={isDimmed} />
 
         <mesh ref={meshRef} scale={irregularScale}>
           <sphereGeometry args={[body.radius, body.kind === 'satellite' ? 32 : 48, 48]} />
@@ -157,9 +161,23 @@ export function OrbitingBody({
               />
             }
           >
-            <BodySurface body={body} isActive={isHovered || isSelected} isDimmed={isDimmed} />
+            <BodySurface
+              body={body}
+              graphicsQuality={graphicsQuality}
+              isActive={isHovered || isSelected}
+              isDimmed={isDimmed}
+            />
           </Suspense>
         </mesh>
+
+        {GRAPHICS_QUALITY[graphicsQuality].effects && body.id === 'earth' && (
+          <EarthClouds
+            isDimmed={isDimmed}
+            isTimePaused={isTimePaused}
+            radius={body.radius}
+            timeScale={timeScale}
+          />
+        )}
       </group>
 
       {isHovered && !isSelected && (
@@ -189,6 +207,7 @@ export function OrbitingBody({
             <OrbitingBody
               body={childBody}
               childBodies={[]}
+              graphicsQuality={graphicsQuality}
               hoveredBodyId={hoveredBodyId}
               isDimmed={Boolean(selectedBodyId && selectedBodyId !== childBody.id)}
               isOrbitPaused={isTimePaused || selectedBodyId === childBody.id}

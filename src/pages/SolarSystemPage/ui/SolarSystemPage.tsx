@@ -32,7 +32,7 @@ export function SolarSystemPage() {
   const { bodyId } = useParams();
   const prefetchApod = usePrefetchApod();
   const [isTimePaused, setIsTimePaused] = useState(false);
-  const [graphicsQuality, setGraphicsQuality] = useState<GraphicsQuality>('high');
+  const [graphicsQuality, setGraphicsQuality] = useState<GraphicsQuality>('medium');
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [timeScale, setTimeScale] = useState<number>(1);
   const selectedBody = getCelestialBodyById(bodyId);

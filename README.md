@@ -32,6 +32,13 @@ Three.js, and React Three Fiber.
 - SCSS Modules;
 - Vitest, ESLint, and Prettier.
 
+Graphics presets have visible rendering differences:
+
+- `Low`: schematic color materials without surface textures or atmosphere;
+- `Medium`: textured bodies and the standard atmospheric scene;
+- `High`: denser space background, animated Earth clouds, solar granulation,
+  corona, and prominences.
+
 ## Run locally
 
 ```bash

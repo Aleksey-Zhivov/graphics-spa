@@ -11,9 +11,18 @@ import { Group } from 'three';
 
 import { getThreeRotationDirection } from '../lib/motion';
 import { useCelestialTexture } from '../lib/useCelestialTexture';
+import { GRAPHICS_QUALITY, type GraphicsQuality } from '../model/quality';
+import { SunActivity } from './SunActivity';
+
+function TexturedStarSurface({ body, isDimmed }: { body: CelestialBodyData; isDimmed: boolean }) {
+  const texture = useCelestialTexture(body.textureFile!);
+
+  return <meshBasicMaterial map={texture} transparent={isDimmed} opacity={isDimmed ? 0.18 : 1} />;
+}
 
 export function Star({
   body,
+  graphicsQuality,
   isDimmed,
   isHovered,
   isTimePaused,
@@ -23,6 +32,7 @@ export function Star({
   onSelect,
 }: {
   body: CelestialBodyData;
+  graphicsQuality: GraphicsQuality;
   isDimmed: boolean;
   isHovered: boolean;
   isTimePaused: boolean;
@@ -31,8 +41,8 @@ export function Star({
   onRegister: (bodyId: CelestialBodyId, group: Group | null) => void;
   onSelect: (bodyId: CelestialBodyId) => void;
 }) {
-  const texture = useCelestialTexture(body.textureFile!);
   const meshRef = useRef<Mesh>(null);
+  const qualitySettings = GRAPHICS_QUALITY[graphicsQuality];
   const rotationSpeed = getVisualRotationSpeed(body.rotationPeriodDays);
   const rotationDirection = getThreeRotationDirection(body.rotationDirection);
 
@@ -70,8 +80,24 @@ export function Star({
       <group rotation-z={(body.axialTiltDegrees * Math.PI) / 180}>
         <mesh ref={meshRef}>
           <sphereGeometry args={[body.radius, 64, 64]} />
-          <meshBasicMaterial map={texture} transparent={isDimmed} opacity={isDimmed ? 0.18 : 1} />
+          {!qualitySettings.textures ? (
+            <meshBasicMaterial
+              color={body.color}
+              transparent={isDimmed}
+              opacity={isDimmed ? 0.18 : 1}
+            />
+          ) : (
+            <TexturedStarSurface body={body} isDimmed={isDimmed} />
+          )}
         </mesh>
+        {qualitySettings.effects && (
+          <SunActivity
+            isDimmed={isDimmed}
+            isTimePaused={isTimePaused}
+            radius={body.radius}
+            timeScale={timeScale}
+          />
+        )}
         <pointLight color='#ffb56b' intensity={50} distance={35} />
       </group>
     </group>

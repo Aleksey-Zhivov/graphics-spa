@@ -1,7 +1,29 @@
 import type { CelestialBodyData } from '@/entities/celestialBody';
 
+import { GRAPHICS_QUALITY, type GraphicsQuality } from '../model/quality';
 import { useCelestialTexture } from '../lib/useCelestialTexture';
 import { useProceduralBodyTexture } from '../lib/useProceduralBodyTexture';
+
+function SchematicSurface({
+  body,
+  isActive,
+  isDimmed,
+}: {
+  body: CelestialBodyData;
+  isActive: boolean;
+  isDimmed: boolean;
+}) {
+  return (
+    <meshStandardMaterial
+      color={body.color}
+      emissive={body.color}
+      emissiveIntensity={isActive ? 0.28 : 0.06}
+      opacity={isDimmed ? 0.18 : 1}
+      roughness={0.9}
+      transparent={isDimmed}
+    />
+  );
+}
 
 function TexturedSurface({
   body,
@@ -51,13 +73,19 @@ function ProceduralSurface({
 
 export function BodySurface({
   body,
+  graphicsQuality,
   isActive,
   isDimmed,
 }: {
   body: CelestialBodyData;
+  graphicsQuality: GraphicsQuality;
   isActive: boolean;
   isDimmed: boolean;
 }) {
+  if (!GRAPHICS_QUALITY[graphicsQuality].textures) {
+    return <SchematicSurface body={body} isActive={isActive} isDimmed={isDimmed} />;
+  }
+
   return body.textureFile ? (
     <TexturedSurface
       body={body as CelestialBodyData & { textureFile: string }}
