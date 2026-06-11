@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
-import { AdditiveBlending, BackSide, Group, MeshBasicMaterial, ShaderMaterial } from 'three';
+import { AdditiveBlending, BackSide, MeshBasicMaterial, ShaderMaterial } from 'three';
 
 const vertexShader = `
   varying vec3 vPosition;
@@ -67,18 +67,17 @@ const fragmentShader = `
     );
     point.xz = flowRotation * point.xz;
 
-    vec3 pixelPoint = floor(point * 72.0) / 72.0;
-    vec3 slowFlow = pixelPoint * 9.0 + vec3(uTime * 0.12, -uTime * 0.035, uTime * 0.075);
+    vec3 slowFlow = point * 24.0 + vec3(uTime * 0.12, -uTime * 0.035, uTime * 0.075);
     vec3 counterFlow =
-      pixelPoint * 24.0 + vec3(-uTime * 0.16, uTime * 0.11, -uTime * 0.08);
+      point * 80.0 + vec3(-uTime * 0.16, uTime * 0.11, -uTime * 0.08);
     float convection = fbm(slowFlow);
     float granules = noise(counterFlow);
-    float sectorPulse = sin(
-      dot(floor(point * 48.0), vec3(1.7, 0.9, 1.3)) + uTime * 2.4
-    );
-    float energy = clamp(convection * 0.82 + granules * 0.34 + sectorPulse * 0.1, 0.0, 1.0);
-    float sunspotNoise = fbm(point * 5.0 + vec3(-uTime * 0.025, 0.0, uTime * 0.012));
-    float sunspots = smoothstep(0.73, 0.82, sunspotNoise) * 0.72;
+    float waveOne = sin(dot(point, vec3(31.0, 23.0, 27.0)) + uTime * 1.4);
+    float waveTwo = sin(dot(point, vec3(-19.0, 37.0, 21.0)) - uTime * 1.1);
+    float softWaves = (waveOne + waveTwo) * 0.5;
+    float energy = clamp(convection * 0.86 + granules * 0.3 + softWaves * 0.035, 0.0, 1.0);
+    float sunspotNoise = fbm(point * 8.0 + vec3(-uTime * 0.025, 0.0, uTime * 0.012));
+    float sunspots = smoothstep(0.7, 0.88, sunspotNoise) * 0.48;
     vec3 deepOrange = vec3(0.78, 0.08, 0.0);
     vec3 orange = vec3(1.0, 0.28, 0.015);
     vec3 yellow = vec3(1.0, 0.9, 0.25);
@@ -89,12 +88,6 @@ const fragmentShader = `
     gl_FragColor = vec4(color, uOpacity);
   }
 `;
-
-const PROMINENCES = [
-  { rotation: [0.15, 0.3, 0.2], scale: 1, speed: 0.7 },
-  { rotation: [1.3, -0.4, 1.1], scale: 0.72, speed: 0.9 },
-  { rotation: [-0.8, 0.7, -0.5], scale: 0.55, speed: 1.15 },
-] as const;
 
 export function SunActivity({
   isDimmed,
@@ -109,7 +102,6 @@ export function SunActivity({
 }) {
   const surfaceMaterialRef = useRef<ShaderMaterial>(null);
   const coronaMaterialRef = useRef<MeshBasicMaterial>(null);
-  const prominenceRefs = useRef<Array<Group | null>>([]);
   const elapsedTime = useRef(0);
   const surfaceUniforms = useMemo(
     () => ({
@@ -134,23 +126,12 @@ export function SunActivity({
       coronaMaterialRef.current.opacity =
         (isDimmed ? 0.025 : 0.11) + Math.sin(time * 0.85) * (isDimmed ? 0.008 : 0.025);
     }
-
-    prominenceRefs.current.forEach((group, index) => {
-      if (!group) {
-        return;
-      }
-
-      const prominence = PROMINENCES[index];
-      group.rotation.z = time * 0.025 * prominence.speed;
-      const pulse = prominence.scale + Math.sin(time * prominence.speed + index) * 0.08;
-      group.scale.setScalar(pulse);
-    });
   });
 
   return (
     <>
       <mesh scale={1.006}>
-        <sphereGeometry args={[radius, 64, 64]} />
+        <sphereGeometry args={[radius, 160, 160]} />
         <shaderMaterial
           ref={surfaceMaterialRef}
           fragmentShader={fragmentShader}
@@ -172,28 +153,6 @@ export function SunActivity({
           transparent
         />
       </mesh>
-
-      {PROMINENCES.map((prominence, index) => (
-        <group
-          key={index}
-          ref={(group) => {
-            prominenceRefs.current[index] = group;
-          }}
-          rotation={prominence.rotation}
-          scale={prominence.scale}
-        >
-          <mesh position={[radius * 0.88, 0, 0]} rotation={[0, 0, -Math.PI / 2.7]}>
-            <torusGeometry args={[radius * 0.34, radius * 0.018, 8, 32, Math.PI * 1.15]} />
-            <meshBasicMaterial
-              blending={AdditiveBlending}
-              color='#ff7a24'
-              depthWrite={false}
-              opacity={isDimmed ? 0.04 : 0.36}
-              transparent
-            />
-          </mesh>
-        </group>
-      ))}
     </>
   );
 }

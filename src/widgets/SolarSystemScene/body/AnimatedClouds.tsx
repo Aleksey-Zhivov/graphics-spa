@@ -3,10 +3,10 @@ import { useMemo, useRef } from 'react';
 import { Color, Mesh, ShaderMaterial } from 'three';
 
 const vertexShader = `
-  varying vec2 vUv;
+  varying vec3 vPosition;
 
   void main() {
-    vUv = uv;
+    vPosition = position;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -17,31 +17,44 @@ const fragmentShader = `
   uniform float uFlowSpeed;
   uniform float uOpacity;
   uniform float uTime;
-  varying vec2 vUv;
+  varying vec3 vPosition;
 
-  float hash(vec2 point) {
-    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453123);
+  float hash(vec3 point) {
+    return fract(sin(dot(point, vec3(127.1, 311.7, 74.7))) * 43758.5453123);
   }
 
-  float noise(vec2 point) {
-    vec2 cell = floor(point);
-    vec2 local = fract(point);
+  float noise(vec3 point) {
+    vec3 cell = floor(point);
+    vec3 local = fract(point);
     local = local * local * (3.0 - 2.0 * local);
 
-    return mix(
-      mix(hash(cell), hash(cell + vec2(1.0, 0.0)), local.x),
-      mix(hash(cell + vec2(0.0, 1.0)), hash(cell + vec2(1.0, 1.0)), local.x),
-      local.y
+    float x00 = mix(hash(cell), hash(cell + vec3(1.0, 0.0, 0.0)), local.x);
+    float x10 = mix(
+      hash(cell + vec3(0.0, 1.0, 0.0)),
+      hash(cell + vec3(1.0, 1.0, 0.0)),
+      local.x
     );
+    float x01 = mix(
+      hash(cell + vec3(0.0, 0.0, 1.0)),
+      hash(cell + vec3(1.0, 0.0, 1.0)),
+      local.x
+    );
+    float x11 = mix(
+      hash(cell + vec3(0.0, 1.0, 1.0)),
+      hash(cell + vec3(1.0, 1.0, 1.0)),
+      local.x
+    );
+
+    return mix(mix(x00, x10, local.y), mix(x01, x11, local.y), local.z);
   }
 
-  float fbm(vec2 point) {
+  float fbm(vec3 point) {
     float value = 0.0;
     float amplitude = 0.55;
 
     for (int index = 0; index < 4; index++) {
       value += noise(point) * amplitude;
-      point *= 2.07;
+      point = point * 2.07 + vec3(1.7, 3.1, 2.3);
       amplitude *= 0.48;
     }
 
@@ -49,13 +62,19 @@ const fragmentShader = `
   }
 
   void main() {
-    float shear = sin(vUv.y * 18.0 + uTime * uFlowSpeed * 3.0) * 0.035;
-    vec2 flow = vec2(
-      vUv.x * 7.0 + uTime * uFlowSpeed + shear,
-      vUv.y * 4.0 - uTime * uFlowSpeed * 0.14
+    vec3 point = normalize(vPosition);
+    float flowAngle = uTime * uFlowSpeed + point.y * 0.3;
+    mat2 flowRotation = mat2(
+      cos(flowAngle), -sin(flowAngle),
+      sin(flowAngle), cos(flowAngle)
     );
+    point.xz = flowRotation * point.xz;
+
+    vec3 flow =
+      point * vec3(7.5, 5.0, 7.5) +
+      vec3(uTime * uFlowSpeed * 0.42, -uTime * uFlowSpeed * 0.1, uTime * uFlowSpeed * 0.27);
     float clouds = smoothstep(uDensity, uDensity + 0.18, fbm(flow));
-    float latitudeFade = smoothstep(0.02, 0.18, vUv.y) * smoothstep(0.98, 0.82, vUv.y);
+    float latitudeFade = smoothstep(0.02, 0.18, 1.0 - abs(point.y));
     float alpha = clouds * latitudeFade * uOpacity;
 
     if (alpha < 0.015) {
@@ -112,7 +131,7 @@ export function AnimatedClouds({
 
   return (
     <mesh ref={meshRef} scale={1.022}>
-      <sphereGeometry args={[radius, 48, 48]} />
+      <sphereGeometry args={[radius, 64, 64]} />
       <shaderMaterial
         ref={materialRef}
         depthWrite={false}
