@@ -8,11 +8,13 @@ import type { CelestialBodyData, CelestialBodyId } from '@/entities/celestialBod
 import { SYSTEM_CAMERA_POSITION, SYSTEM_CAMERA_TARGET } from '../lib/constants';
 
 export function CameraFocus({
+  interactionSignal,
   resetViewSignal,
   selectedBody,
   bodyGroups,
   controlsRef,
 }: {
+  interactionSignal: number;
   resetViewSignal: number;
   selectedBody?: CelestialBodyData;
   bodyGroups: RefObject<Map<CelestialBodyId, Group>>;
@@ -29,6 +31,12 @@ export function CameraFocus({
   useEffect(() => {
     isTransitioning.current = true;
   }, [resetViewSignal, selectedBody]);
+
+  useEffect(() => {
+    if (interactionSignal > 0) {
+      isTransitioning.current = false;
+    }
+  }, [interactionSignal]);
 
   useFrame((_, delta) => {
     const controls = controlsRef.current;

@@ -60,7 +60,7 @@ const fragmentShader = `
 
   void main() {
     vec3 point = normalize(vPosition);
-    float flowAngle = uTime * 0.12 + point.y * 0.35;
+    float flowAngle = point.y * 0.35;
     mat2 flowRotation = mat2(
       cos(flowAngle), -sin(flowAngle),
       sin(flowAngle), cos(flowAngle)

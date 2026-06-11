@@ -1,9 +1,9 @@
 @use '@/shared/styles/mixins' as mixins;
 
 .page {
-  height: 100vh;
+  height: 100dvh;
   padding: 6.5rem 1.5rem 1.5rem;
-  overflow-y: auto;
+  overflow: hidden;
   background:
     radial-gradient(circle at 65% 15%, rgb(41 77 119 / 20%), transparent 35rem),
     var(--color-background);
@@ -155,7 +155,8 @@
   grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.55fr);
   gap: 1.5rem;
   width: min(90rem, 100%);
-  min-height: calc(100vh - 8rem);
+  height: calc(100dvh - 8rem);
+  min-height: 0;
   margin: 0 auto;
 }
 
@@ -176,7 +177,8 @@
 
 .media {
   position: relative;
-  min-height: 32rem;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
   border: 1px solid var(--color-surface-border);
   background: #02050a;
@@ -240,8 +242,9 @@
 .content {
   @include mixins.glass-panel;
 
-  align-self: start;
+  min-height: 0;
   padding: clamp(1.5rem, 3vw, 2.5rem);
+  overflow-y: auto;
 
   .eyebrow,
   time {
@@ -289,9 +292,10 @@
 
   .apod {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(12rem, 1.1fr) minmax(0, 0.9fr);
   }
 
   .media {
-    min-height: min(60vh, 32rem);
+    min-height: 0;
   }
 }

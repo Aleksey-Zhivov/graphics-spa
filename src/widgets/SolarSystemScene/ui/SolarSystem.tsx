@@ -30,6 +30,7 @@ export function SolarSystem({
   const navigate = useNavigate();
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const bodyGroups = useRef(new Map<CelestialBodyId, Group>());
+  const [cameraInteractionSignal, setCameraInteractionSignal] = useState(0);
   const [hoveredBodyId, setHoveredBodyId] = useState<CelestialBodyId | null>(null);
   const sun = getBodiesByKind('star')[0];
   const selectedBody = getCelestialBodyById(selectedBodyId);
@@ -138,10 +139,12 @@ export function SolarSystem({
         maxDistance={selectedBody?.kind === 'satellite' ? 4 : selectedBody ? 11 : 48}
         minPolarAngle={selectedBody ? Math.PI / 5 : Math.PI / 6}
         maxPolarAngle={selectedBody ? Math.PI / 1.65 : Math.PI / 2.2}
+        onStart={() => setCameraInteractionSignal((signal) => signal + 1)}
         target={[1, 0, 0]}
       />
 
       <CameraFocus
+        interactionSignal={cameraInteractionSignal}
         resetViewSignal={resetViewSignal}
         selectedBody={selectedBody}
         bodyGroups={bodyGroups}
