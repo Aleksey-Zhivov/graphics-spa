@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
-import { AdditiveBlending, BackSide, MeshBasicMaterial, ShaderMaterial } from 'three';
+import { ShaderMaterial } from 'three';
 
 const vertexShader = `
   varying vec3 vPosition;
@@ -101,7 +101,6 @@ export function SunActivity({
   timeScale: number;
 }) {
   const surfaceMaterialRef = useRef<ShaderMaterial>(null);
-  const coronaMaterialRef = useRef<MeshBasicMaterial>(null);
   const elapsedTime = useRef(0);
   const surfaceUniforms = useMemo(
     () => ({
@@ -121,38 +120,18 @@ export function SunActivity({
     if (surfaceMaterialRef.current) {
       surfaceMaterialRef.current.uniforms.uTime.value = time;
     }
-
-    if (coronaMaterialRef.current) {
-      coronaMaterialRef.current.opacity =
-        (isDimmed ? 0.025 : 0.11) + Math.sin(time * 0.85) * (isDimmed ? 0.008 : 0.025);
-    }
   });
 
   return (
-    <>
-      <mesh scale={1.006}>
-        <sphereGeometry args={[radius, 160, 160]} />
-        <shaderMaterial
-          ref={surfaceMaterialRef}
-          fragmentShader={fragmentShader}
-          transparent
-          uniforms={surfaceUniforms}
-          vertexShader={vertexShader}
-        />
-      </mesh>
-
-      <mesh scale={1.16}>
-        <sphereGeometry args={[radius, 48, 48]} />
-        <meshBasicMaterial
-          ref={coronaMaterialRef}
-          blending={AdditiveBlending}
-          color='#ff7a24'
-          depthWrite={false}
-          opacity={isDimmed ? 0.025 : 0.11}
-          side={BackSide}
-          transparent
-        />
-      </mesh>
-    </>
+    <mesh scale={1.006}>
+      <sphereGeometry args={[radius, 160, 160]} />
+      <shaderMaterial
+        ref={surfaceMaterialRef}
+        fragmentShader={fragmentShader}
+        transparent
+        uniforms={surfaceUniforms}
+        vertexShader={vertexShader}
+      />
+    </mesh>
   );
 }

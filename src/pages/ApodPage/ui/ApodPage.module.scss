@@ -244,27 +244,27 @@
 
   min-width: 0;
   min-height: 0;
+  font-size: 1rem;
   padding: clamp(1.5rem, 2.2vw, 2.5rem);
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
 
   .eyebrow,
   time {
     display: block;
     color: var(--color-accent);
-    font-size: 0.65rem;
+    font-size: 0.65em;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
   time {
-    margin-top: 0.6rem;
+    margin-top: 0.6em;
     color: var(--color-text-secondary);
   }
 
   h1 {
-    margin: 1.25rem 0;
-    font-size: clamp(2.2rem, 2.6vw, 3.8rem);
+    margin: 0.4em 0;
+    font-size: 3.2em;
     letter-spacing: -0.06em;
     line-height: 0.92;
     overflow-wrap: anywhere;
@@ -273,13 +273,13 @@
   p {
     margin: 0;
     color: var(--color-text-secondary);
-    font-size: 0.82rem;
+    font-size: 0.82em;
     line-height: 1.65;
   }
 
   small {
     display: block;
-    margin-top: 1.5rem;
+    margin-top: 1.5em;
     color: var(--color-text-primary);
   }
 }
@@ -303,6 +303,6 @@
   }
 
   .content {
-    overflow-y: visible;
+    overflow: visible;
   }
 }

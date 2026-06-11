@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { useGetApodQuery } from '@/entities/apod';
 
+import { useFitContentScale } from '../lib/useFitContentScale';
 import styles from './ApodPage.module.scss';
 
 const ERROR_DELAY_MS = 10_000;
@@ -24,6 +25,7 @@ export function ApodPage() {
   const { data, isError, isFetching, refetch } = useGetApodQuery();
   const [isDelayed, setIsDelayed] = useState(false);
   const [loadedMediaUrl, setLoadedMediaUrl] = useState<string | null>(null);
+  const contentRef = useFitContentScale(data?.date);
   const isMediaLoaded = Boolean(data?.url && loadedMediaUrl === data.url);
   const showDelayedLoading = isDelayed && isFetching && !data;
 
@@ -119,7 +121,7 @@ export function ApodPage() {
             )}
           </div>
 
-          <section className={styles.content}>
+          <section ref={contentRef} className={styles.content}>
             <span className={styles.eyebrow}>NASA / Astronomy Picture of the Day</span>
             <time dateTime={data.date}>{data.date}</time>
             <h1>{data.title}</h1>
