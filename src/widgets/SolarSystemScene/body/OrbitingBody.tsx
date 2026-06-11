@@ -32,9 +32,11 @@ const KIND_LABELS = {
 type OrbitingBodyProps = {
   body: CelestialBodyData;
   childBodies: CelestialBodyData[];
+  childrenAreInteractive: boolean;
   graphicsQuality: GraphicsQuality;
   hoveredBodyId: CelestialBodyId | null;
   isDimmed: boolean;
+  isInteractive: boolean;
   isOrbitPaused: boolean;
   isTimePaused: boolean;
   selectedBodyId?: CelestialBodyId;
@@ -48,9 +50,11 @@ type OrbitingBodyProps = {
 export function OrbitingBody({
   body,
   childBodies,
+  childrenAreInteractive,
   graphicsQuality,
   hoveredBodyId,
   isDimmed,
+  isInteractive,
   isOrbitPaused,
   isTimePaused,
   selectedBodyId,
@@ -89,16 +93,16 @@ export function OrbitingBody({
     body.shape === 'irregular' ? [1.35, 0.9, 1] : [1, 1, 1];
 
   useEffect(() => {
-    if (isHovered) {
+    if (isHovered && isInteractive) {
       document.body.style.cursor = 'pointer';
     }
 
     return () => {
-      if (isHovered) {
+      if (isHovered && isInteractive) {
         document.body.style.cursor = 'default';
       }
     };
-  }, [isHovered]);
+  }, [isHovered, isInteractive]);
 
   useFrame((_, delta) => {
     if (!bodyRef.current || !meshRef.current) {
@@ -131,17 +135,29 @@ export function OrbitingBody({
         onRegister(body.id, group);
       }}
       onClick={(event) => {
+        if (!isInteractive) {
+          return;
+        }
+
         event.stopPropagation();
         onSelect(body.id);
       }}
       onPointerEnter={(event) => {
+        if (!isInteractive) {
+          return;
+        }
+
         event.stopPropagation();
         onHover(body.id);
       }}
-      onPointerLeave={() => onHover(null)}
+      onPointerLeave={() => {
+        if (isInteractive) {
+          onHover(null);
+        }
+      }}
     >
       <mesh>
-        <sphereGeometry args={[body.radius * (body.kind === 'satellite' ? 2.8 : 1.8), 24, 24]} />
+        <sphereGeometry args={[body.radius * (body.kind === 'satellite' ? 5.5 : 1.8), 24, 24]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
@@ -200,7 +216,7 @@ export function OrbitingBody({
         )}
       </group>
 
-      {isHovered && !isSelected && (
+      {isInteractive && isHovered && !isSelected && (
         <Html
           position={[0, body.radius + (body.kind === 'satellite' ? 0.28 : 0.65), 0]}
           center
@@ -227,9 +243,11 @@ export function OrbitingBody({
             <OrbitingBody
               body={childBody}
               childBodies={[]}
+              childrenAreInteractive={false}
               graphicsQuality={graphicsQuality}
               hoveredBodyId={hoveredBodyId}
               isDimmed={Boolean(selectedBodyId && selectedBodyId !== childBody.id)}
+              isInteractive={childrenAreInteractive}
               isOrbitPaused={isTimePaused || selectedBodyId === childBody.id}
               isTimePaused={isTimePaused || selectedBodyId === childBody.id}
               selectedBodyId={selectedBodyId}

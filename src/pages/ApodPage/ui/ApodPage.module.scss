@@ -286,7 +286,10 @@
 
 @media (max-width: 860px) {
   .page {
+    height: 100dvh;
     padding: 5.5rem 1rem 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .header {
@@ -295,7 +298,9 @@
 
   .apod {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(12rem, 1fr) auto;
+    grid-template-rows: minmax(12rem, 42dvh) auto;
+    height: auto;
+    min-height: calc(100dvh - 6.5rem);
   }
 
   .media {
@@ -303,6 +308,12 @@
   }
 
   .content {
+    font-size: 0.88rem;
+    padding: 1.25rem;
     overflow: visible;
+
+    h1 {
+      font-size: 2.35em;
+    }
   }
 }
