@@ -67,6 +67,7 @@ const fragmentShader = `
 `;
 
 export function AnimatedClouds({
+  axialRotationSpeed,
   color,
   density,
   flowSpeed,
@@ -76,6 +77,7 @@ export function AnimatedClouds({
   radius,
   timeScale,
 }: {
+  axialRotationSpeed: number;
   color: [number, number, number];
   density: number;
   flowSpeed: number;
@@ -104,7 +106,7 @@ export function AnimatedClouds({
     }
 
     if (!isTimePaused && meshRef.current) {
-      meshRef.current.rotation.y -= delta * flowSpeed * 0.22 * timeScale;
+      meshRef.current.rotation.y += delta * (axialRotationSpeed - flowSpeed * 0.5) * timeScale;
     }
   });
 

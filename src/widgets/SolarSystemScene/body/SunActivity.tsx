@@ -3,10 +3,10 @@ import { useMemo, useRef } from 'react';
 import { AdditiveBlending, BackSide, Group, MeshBasicMaterial, ShaderMaterial } from 'three';
 
 const vertexShader = `
-  varying vec2 vUv;
+  varying vec3 vPosition;
 
   void main() {
-    vUv = uv;
+    vPosition = position;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -14,31 +14,44 @@ const vertexShader = `
 const fragmentShader = `
   uniform float uOpacity;
   uniform float uTime;
-  varying vec2 vUv;
+  varying vec3 vPosition;
 
-  float hash(vec2 point) {
-    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453123);
+  float hash(vec3 point) {
+    return fract(sin(dot(point, vec3(127.1, 311.7, 74.7))) * 43758.5453123);
   }
 
-  float noise(vec2 point) {
-    vec2 cell = floor(point);
-    vec2 local = fract(point);
+  float noise(vec3 point) {
+    vec3 cell = floor(point);
+    vec3 local = fract(point);
     local = local * local * (3.0 - 2.0 * local);
 
-    return mix(
-      mix(hash(cell), hash(cell + vec2(1.0, 0.0)), local.x),
-      mix(hash(cell + vec2(0.0, 1.0)), hash(cell + vec2(1.0, 1.0)), local.x),
-      local.y
+    float x00 = mix(hash(cell), hash(cell + vec3(1.0, 0.0, 0.0)), local.x);
+    float x10 = mix(
+      hash(cell + vec3(0.0, 1.0, 0.0)),
+      hash(cell + vec3(1.0, 1.0, 0.0)),
+      local.x
     );
+    float x01 = mix(
+      hash(cell + vec3(0.0, 0.0, 1.0)),
+      hash(cell + vec3(1.0, 0.0, 1.0)),
+      local.x
+    );
+    float x11 = mix(
+      hash(cell + vec3(0.0, 1.0, 1.0)),
+      hash(cell + vec3(1.0, 1.0, 1.0)),
+      local.x
+    );
+
+    return mix(mix(x00, x10, local.y), mix(x01, x11, local.y), local.z);
   }
 
-  float fbm(vec2 point) {
+  float fbm(vec3 point) {
     float value = 0.0;
     float amplitude = 0.55;
 
     for (int index = 0; index < 5; index++) {
       value += noise(point) * amplitude;
-      point = point * 2.03 + vec2(3.1, 1.7);
+      point = point * 2.03 + vec3(3.1, 1.7, 2.4);
       amplitude *= 0.5;
     }
 
@@ -46,25 +59,25 @@ const fragmentShader = `
   }
 
   void main() {
-    vec2 pixelUv = floor(vUv * vec2(180.0, 90.0)) / vec2(180.0, 90.0);
-    float latitudeFlow = sin(pixelUv.y * 19.0 + uTime * 0.75) * 0.025;
-    vec2 slowFlow = vec2(
-      pixelUv.x * 8.0 + uTime * 0.11 + latitudeFlow,
-      pixelUv.y * 5.0 - uTime * 0.035
+    vec3 point = normalize(vPosition);
+    float flowAngle = uTime * 0.12 + point.y * 0.35;
+    mat2 flowRotation = mat2(
+      cos(flowAngle), -sin(flowAngle),
+      sin(flowAngle), cos(flowAngle)
     );
-    vec2 counterFlow = vec2(
-      pixelUv.x * 15.0 - uTime * 0.07,
-      pixelUv.y * 9.0 + uTime * 0.055
-    );
+    point.xz = flowRotation * point.xz;
+
+    vec3 pixelPoint = floor(point * 72.0) / 72.0;
+    vec3 slowFlow = pixelPoint * 9.0 + vec3(uTime * 0.12, -uTime * 0.035, uTime * 0.075);
+    vec3 counterFlow =
+      pixelPoint * 24.0 + vec3(-uTime * 0.16, uTime * 0.11, -uTime * 0.08);
     float convection = fbm(slowFlow);
     float granules = noise(counterFlow);
     float sectorPulse = sin(
-      floor(pixelUv.x * 28.0) * 1.7 +
-      floor(pixelUv.y * 14.0) * 0.9 +
-      uTime * 2.2
+      dot(floor(point * 48.0), vec3(1.7, 0.9, 1.3)) + uTime * 2.4
     );
     float energy = clamp(convection * 0.82 + granules * 0.34 + sectorPulse * 0.1, 0.0, 1.0);
-    float sunspotNoise = fbm(vec2(pixelUv.x * 5.0 - uTime * 0.025, pixelUv.y * 3.0));
+    float sunspotNoise = fbm(point * 5.0 + vec3(-uTime * 0.025, 0.0, uTime * 0.012));
     float sunspots = smoothstep(0.73, 0.82, sunspotNoise) * 0.72;
     vec3 deepOrange = vec3(0.78, 0.08, 0.0);
     vec3 orange = vec3(1.0, 0.28, 0.015);

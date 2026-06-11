@@ -84,6 +84,7 @@ export function OrbitingBody({
   const orbitDirection = body.orbitDirection === 'prograde' ? 1 : -1;
   const rotationSpeed = getVisualRotationSpeed(body.rotationPeriodDays);
   const rotationDirection = getThreeRotationDirection(body.rotationDirection);
+  const axialRotationSpeed = rotationSpeed * rotationDirection;
   const irregularScale: [number, number, number] =
     body.shape === 'irregular' ? [1.35, 0.9, 1] : [1, 1, 1];
 
@@ -172,6 +173,7 @@ export function OrbitingBody({
 
         {GRAPHICS_QUALITY[graphicsQuality].effects && body.id === 'earth' && (
           <AnimatedClouds
+            axialRotationSpeed={axialRotationSpeed}
             color={[0.9, 0.96, 1]}
             density={0.48}
             flowSpeed={0.16}
@@ -185,6 +187,7 @@ export function OrbitingBody({
 
         {GRAPHICS_QUALITY[graphicsQuality].effects && body.id === 'venus' && (
           <AnimatedClouds
+            axialRotationSpeed={axialRotationSpeed}
             color={[1, 0.78, 0.34]}
             density={0.42}
             flowSpeed={-0.1}
